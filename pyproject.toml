@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "moral-keeper-ai"
+version = "0.1.0"
+description = ""
+authors = ["C3Lab <info.c3lab@gmail.com>"]
+license = "GNU Affero General Public License v3.0"
+readme = "README.md"
+repository = "https://github.com/c-3lab/moral-keeper-ai/"
+documentation = "https://github.com/c-3lab/moral-keeper-ai/README.md"
+
+# 記載内容が適切か要確認
+keywords = []
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.8",
+]
+include = ["**/*.mo"] 
+packages = [
+    { include = "moral_keeper_ai" },
+    { include = "README.md" },
+    { include = "LICENSE" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+openai = "^1.35.5"
+python-dotenv = "^1.0.1"
+pyyaml = "6.0.1"
+pre-commit = "3.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203,W503,W504"
+inline-quotes = "single"
+multiline-quotes = "single"
+docstring-quotes = "single"
+exclude = "tmp, build"
+
+[tool.black]
+skip-string-normalization = true
+preview = true
+
+[tool.isort]
+profile = "black"
+include_trailing_comma = true
+line_length = 88
+multi_line_output = 3
