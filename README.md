@@ -7,7 +7,9 @@ moral-keeper-ai は、SNSなどにおいてユーザーが投稿するテキス�
 ## 使用技術  
 
 - Azure OpenAI Service  
-- GPT-4o  
+- OpenAI  
+- GPT-4o
+- GPT-3turbo  
 
 ## Main features  
 
