@@ -27,11 +27,11 @@ moral-keeper-ai は、SNSなどにおいてユーザーが投稿するテキス�
 pip install moral-keeper-ai
 ```
 
-2. 
+2. 設定
 
-.envまたは環境変数で各種設定を追加
+.envまたは環境変数で各種設定を追加( [環境変数および設定方法](#環境変数および設定方法)参照)
 
-3. 
+3. 使用例
 
 ```python
 import moral_keeper_ai
