@@ -34,7 +34,7 @@ pip install moral-keeper-ai
 3. 
 
 ```python
-from moral_keeper_ai import moral_keeper_ai 
+import moral_keeper_ai 
 judgment, details = moral_keeper_ai.check('チェックしたい文章')
 suggested_message = moral_keeper_ai.suggest('投稿内容として適切にしたい文章')
 ```
