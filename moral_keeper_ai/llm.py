@@ -2,7 +2,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from openai import AzureOpenAI
+from openai import AzureOpenAI, BadRequestError
 
 load_dotenv()
 
@@ -30,6 +30,14 @@ class LLM:
             response = self.client.chat.completions.create(
                 model=self.model, response_format=self.response_format, messages=prompt
             )
+        except BadRequestError as e:
+            # print(e)
+            if self.response_format:
+                return {
+                    "OpenAI Filter": False,
+                }
+            else:
+                return e
         except Exception as e:
             print(e)
             return None
