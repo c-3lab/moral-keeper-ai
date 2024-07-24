@@ -60,15 +60,9 @@ class LLM:
         return json.loads(response.choices[0].message.content)
 
 
-class AsyncLLM:
+class AsyncLLM(LLM):
     def __init__(self, api_key=None, azure_endpoint=None, model=None):
-        self.api_key = api_key if api_key is not None else os.getenv("AZURE_OPENAI_KEY")
-        self.azure_endpoint = (
-            azure_endpoint
-            if azure_endpoint is not None
-            else os.getenv("AZURE_ENDPOINT")
-        )
-        self.model = model if model is not None else os.getenv("LLM_MODEL")
+        super().__init__(api_key, azure_endpoint, model)
 
         self.client = AsyncAzureOpenAI(
             api_key=self.api_key,

@@ -86,8 +86,13 @@ class Criteria:
 
 
 class CheckAI:
-    def __init__(self, api_key=None, azure_endpoint=None, model=None):
-        self.llm = llm.AsyncLLM(api_key, azure_endpoint, model)
+    def __init__(self, api_key=None, azure_endpoint=None, model=None, async_mode=False):
+        self.async_mode = async_mode
+        if async_mode:
+            self.llm = llm.AsyncLLM(api_key, azure_endpoint, model)
+        else:
+            self.llm = llm.LLM(api_key, azure_endpoint, model)
+
         self.criteria = Criteria
 
         self.check_system_template = PromptTemplate.from_template(
@@ -108,7 +113,7 @@ class CheckAI:
             checklist=check_list_prompt
         )
 
-    def check(self, content, check_category=None, repeat_check=1):
+    def _get_system_prompt(self, check_category):
         if check_category is not None:
             # チェックリストをシステムプロンプトに含めるJSON形式の文字列に成型
             check_list_prompt = '{\n'
@@ -121,23 +126,37 @@ class CheckAI:
             )
         else:
             system_prompt = self.default_check_system_prompt
+        return system_prompt
+
+    def _get_responce(self, system_prompt, content, repeat_check):
+        responces = []
+        if self.async_mode:
+            check_tasks = [
+                self.llm.json_mode_chat(system_prompt=system_prompt, prompt=content)
+                for _ in range(repeat_check)
+            ]
+
+            responces = asyncio.get_event_loop().run_until_complete(
+                asyncio.gather(*check_tasks)
+            )
+        else:
+            for _ in range(repeat_check):
+                responces.append(
+                    self.llm.json_mode_chat(system_prompt=system_prompt, prompt=content)
+                )
+        return responces
+
+    def check(self, content, check_category=None, repeat_check=1):
+        system_prompt = self._get_system_prompt(check_category)
+        responces = self._get_responce(system_prompt, content, repeat_check)
+        responces = [responce for responce in responces if responce is not None]
+
+        if not len(responces):
+            return (False, ['Error'])
 
         judgment = True
         details = set([])
-        responces = []
-
-        check_tasks = [
-            self.llm.json_mode_chat(system_prompt=system_prompt, prompt=content)
-            for _ in range(repeat_check)
-        ]
-
-        responces += asyncio.get_event_loop().run_until_complete(
-            asyncio.gather(*check_tasks)
-        )
-
         for responce in responces:
-            if responce is None:
-                continue
             for key, value in responce.items():
                 if value is False:
                     judgment = False
@@ -154,7 +173,10 @@ class CheckAI:
 class MoralKeeperAI:
     def __init__(self, api_key=None, azure_endpoint=None, model=None):
         # AIからレスポンスを得る時に使用する。
-        self.check_ai = CheckAI(api_key, azure_endpoint, model)
+        self.api_key = api_key
+        self.azure_endpoint = azure_endpoint
+        self.model = model
+        self.check_ai = CheckAI(api_key, azure_endpoint, model, async_mode=True)
         # self.suggest_ai = SuggestAI(api_key, azure_endpoint, model)
 
         # suggestメソッドのsystem prompt
@@ -182,7 +204,16 @@ class MoralKeeperAI:
 
         self.criteria = Criteria()
 
-    def check(self, content, check_category=None, repeat_check=1):
+    def check(self, content, check_category=None, repeat_check=1, async_mode=True):
+        if async_mode and type(self.check_ai) is not llm.AsyncAzureOpenAI:
+            self.check_ai = CheckAI(
+                self.api_key, self.azure_endpoint, self.model, async_mode=True
+            )
+        if async_mode is False and type(self.check_ai) is not llm.AzureOpenAI:
+            self.check_ai = CheckAI(
+                self.api_key, self.azure_endpoint, self.model, async_mode=False
+            )
+
         return self.check_ai.check(
             content=content, check_category=check_category, repeat_check=repeat_check
         )

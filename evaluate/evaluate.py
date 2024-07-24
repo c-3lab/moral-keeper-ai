@@ -286,7 +286,9 @@ def main(lang):
     for categorys in test_data_list.values():
         for comments in categorys.values():
             for comment in comments:
-                judgement, ng_reasons = ai.check(comment, repeat_check=3)
+                judgement, ng_reasons = ai.check(
+                    comment, repeat_check=3, async_mode=False
+                )
                 analyst.register(comment=comment, ng_reasons=ng_reasons)
 
     analyst.print_result()
