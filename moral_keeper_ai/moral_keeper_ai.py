@@ -74,12 +74,14 @@ class Criteria:
     }
 
     def get_check_point_list(check_category_mask=0b11111111):
-        ret = set([])
+        # ret = set([]) 順番が保たれない
+        ret = []
         for mask in Criteria.category_mask_list:
             if not check_category_mask & mask:
                 continue
             for checkpoint in Criteria.check_list[Criteria.category_mask_to_name[mask]]:
-                ret.add(checkpoint)
+                if checkpoint not in ret:
+                    ret.append(checkpoint)
         return list(ret)
 
 
