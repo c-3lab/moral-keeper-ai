@@ -1,10 +1,12 @@
 import json
 import os
+from os.path import dirname, join
 
 from dotenv import load_dotenv
 from openai import AsyncAzureOpenAI, AzureOpenAI, BadRequestError
 
-load_dotenv()
+dotenv_path = join(dirname(__file__), '../.env.local')
+load_dotenv(verbose=True, dotenv_path=dotenv_path)
 
 
 class LLM:
