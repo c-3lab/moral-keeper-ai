@@ -107,8 +107,6 @@ class CheckAI:
         else:
             self.llm = llm.LLM(api_key, azure_endpoint, model)
 
-        self.criteria = Criteria()
-
         self.check_system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
             'Please evaluate the received text based on the following '
@@ -214,8 +212,6 @@ class MoralKeeperAI:
             '```\n'
         )
         self.default_suggest_system_prompt = self.suggest_system_template
-
-        self.criteria = Criteria()
 
     def check(self, content, check_category=None, repeat_check=1, async_mode=True):
         check_ai = CheckAI(
