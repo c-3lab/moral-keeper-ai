@@ -79,7 +79,7 @@ class Criteria:
             if not check_category_mask & mask:
                 continue
             ret.append(Criteria.category_mask_to_name[mask])
-        return
+        return ret
 
     def get_check_point_list(check_category_mask=0b11111111):
         ret = []
