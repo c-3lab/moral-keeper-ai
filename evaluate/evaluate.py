@@ -74,7 +74,8 @@ class ai_check_analysis:
         return None
 
     def _comment_to_category(self, comment):
-        for categorys in self.test_comments.keys():
+        for categorys in self.test_comments.values():
+            print(type(self.test_comments))
             for category, comment_list in categorys.items():
                 if comment in comment_list:
                     return category
