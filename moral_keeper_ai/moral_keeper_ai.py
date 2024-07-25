@@ -190,7 +190,6 @@ class MoralKeeperAI:
         self.api_key = api_key
         self.azure_endpoint = azure_endpoint
         self.model = model
-        self.check_ai = CheckAI(api_key, azure_endpoint, model, async_mode=True)
         # self.suggest_ai = SuggestAI(api_key, azure_endpoint, model)
 
         # suggestメソッドのsystem prompt
@@ -219,16 +218,10 @@ class MoralKeeperAI:
         self.criteria = Criteria()
 
     def check(self, content, check_category=None, repeat_check=1, async_mode=True):
-        if async_mode and type(self.check_ai) is not llm.AsyncAzureOpenAI:
-            self.check_ai = CheckAI(
-                self.api_key, self.azure_endpoint, self.model, async_mode=True
-            )
-        if async_mode is False and type(self.check_ai) is not llm.AzureOpenAI:
-            self.check_ai = CheckAI(
-                self.api_key, self.azure_endpoint, self.model, async_mode=False
-            )
-
-        return self.check_ai.check(
+        check_ai = CheckAI(
+            self.api_key, self.azure_endpoint, self.model, async_mode=async_mode
+        )
+        return check_ai.check(
             content=content, check_category=check_category, repeat_check=repeat_check
         )
 
