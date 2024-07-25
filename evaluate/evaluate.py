@@ -43,7 +43,7 @@ class ai_check_analysis:
         # 集計用中間テーブル
         self.check_result_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
-            + self._get_check_points()
+            + Criteria.get_check_point_list()
             + ['OpenAI Filter', 'Others']
         )
         self.check_result_table = []
@@ -66,19 +66,18 @@ class ai_check_analysis:
             comment_categorys += categorys.keys()
         return comment_categorys
 
-    def _get_check_points(self, check_category_mask=0b11111111):
-        return Criteria.get_check_point_list(check_category_mask)
-
-    def _reason_to_category(self, reason):
-        for category, checklist in Criteria.check_list.items():
-            if reason in checklist:
-                yield category
-
-    def _get_comment_info(self, comment):
+    def _comment_to_expect(self, comment):
         for expect, categorys in self.test_comments.items():
+            for comment_list in categorys.values():
+                if comment in comment_list:
+                    return self._strtobool(expect)
+        return None
+
+    def _comment_to_category(self, comment):
+        for categorys in self.test_comments.keys():
             for category, comment_list in categorys.items():
                 if comment in comment_list:
-                    return (self._strtobool(expect), category)
+                    return category
         return None
 
     def _f1_score(self, true_positive, true_negative, false_positive, false_negative):
@@ -105,7 +104,8 @@ class ai_check_analysis:
         print(f"調和平均:{f1_score*100} %")
 
     def register(self, comment: str, ng_reasons: list) -> None:
-        expect, comment_category = self._get_comment_info(comment)
+        expect = self._comment_to_expect(comment)
+        comment_category = self._comment_to_category(comment)
 
         # 中間集計表へcheck結果を登録
         check_result_row = {}
@@ -169,7 +169,11 @@ class ai_check_analysis:
         category_analysis_table_header = [
             'AI \\ comment'
         ] + self._get_comment_categorys()
-        reason_categorys = self._get_comment_categorys() + ['OpenAI Filter', 'Others']
+        reason_categorys = (
+            ['OK']
+            + Criteria.get_check_category_list()
+            + ['OpenAI Filter', 'Error' 'Others']
+        )
         # 表の初期化
         for reason_category in reason_categorys:
             row = {}
@@ -188,15 +192,20 @@ class ai_check_analysis:
                 ] += 1
             else:
                 # check NG
-                for reason in self._get_check_points() + ['OpenAI Filter']:
+                for reason in Criteria.get_check_point_list() + ['OpenAI Filter']:
                     if check_result_row[reason]:
                         # NG理由がヒットしていた場合
                         if reason == 'OpenAI Filter':
                             reason_category = 'OpenAI Filter'
                             hit_categorys.add(reason_category)
+                        elif reason == 'Error':
+                            reason_category = 'Error'
+                            hit_categorys.add(reason_category)
                         else:
-                            for reason_category in self._reason_to_category(reason):
-                                # 理由s -> カテゴリ1 としたい。
+                            for reason_category in Criteria.checkpoint_to_category(
+                                reason
+                            ):
+                                # 同一カテゴリ内の複数理由がヒットしても、カテゴリのカウントは+1にする。
                                 hit_categorys.add(reason_category)
                 for hited_category in list(hit_categorys):
                     _category_analysis_table[hited_category][
@@ -226,13 +235,13 @@ class ai_check_analysis:
             'prompt',
             'category',
         ] + self._get_comment_categorys()
-        checkpoints = self._get_check_points() + ['Others']
+        checkpoints = Criteria.get_check_point_list() + ['Others']
 
         # 表の初期化
         for checkpoint in checkpoints:
             row = {}
             row.setdefault('prompt', checkpoint)
-            for category in self._reason_to_category(checkpoint):
+            for category in Criteria.checkpoint_to_category(checkpoint):
                 if checkpoint == 'Others':
                     category = 'others'
                 row.setdefault('category', category)
@@ -247,7 +256,7 @@ class ai_check_analysis:
                 pass
             else:
                 # check NG
-                for reason in self._get_check_points():
+                for reason in Criteria.get_check_point_list():
                     if check_result_row[reason]:
                         _checkpoint_analysis_table[reason][
                             check_result_row['comment_category']

@@ -73,8 +73,15 @@ class Criteria:
         # ],
     }
 
+    def get_check_category_list(check_category_mask=0b11111111):
+        ret = []
+        for mask in Criteria.category_mask_list:
+            if not check_category_mask & mask:
+                continue
+            ret.append(Criteria.category_mask_to_name[mask])
+        return
+
     def get_check_point_list(check_category_mask=0b11111111):
-        # ret = set([]) 順番が保たれない
         ret = []
         for mask in Criteria.category_mask_list:
             if not check_category_mask & mask:
@@ -83,6 +90,13 @@ class Criteria:
                 if checkpoint not in ret:
                     ret.append(checkpoint)
         return list(ret)
+
+    def checkpoint_to_category(reason):
+        return [
+            category
+            for category, checklist in Criteria.check_list.items()
+            if reason in checklist
+        ]
 
 
 class CheckAI:
@@ -93,7 +107,7 @@ class CheckAI:
         else:
             self.llm = llm.LLM(api_key, azure_endpoint, model)
 
-        self.criteria = Criteria
+        self.criteria = Criteria()
 
         self.check_system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
