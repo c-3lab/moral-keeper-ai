@@ -172,7 +172,7 @@ class ai_check_analysis:
         reason_categorys = (
             ['OK']
             + Criteria.get_check_category_list()
-            + ['OpenAI Filter', 'Error' 'Others']
+            + ['OpenAI Filter', 'Error', 'Others']
         )
         # 表の初期化
         for reason_category in reason_categorys:
