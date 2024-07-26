@@ -1,178 +1,71 @@
 import asyncio
+import json
 
 from langchain_core.prompts import PromptTemplate
+
+from moral_keeper_ai.criateria import Criteria
 
 from . import llm
 
 
-class Criteria:
-    # check category mask
-    VIOLENT = 0b00000001
-    INAPPROPRIATE = 0b00000010
-    SENSITIVE = 0b00000100
-    INACCURATE = 0b00001000
-    DISREPUTE = 0b00010000
-
-    # check category string
-    violent = 'violent'
-    inappropriate = 'inappropriate'
-    sensitive = 'sensitive'
-    inaccurate = 'inaccurate'
-    disrepute = 'disrepute'
-
-    category_mask_to_name = {
-        VIOLENT: violent,
-        INAPPROPRIATE: inappropriate,
-        SENSITIVE: sensitive,
-        INACCURATE: inaccurate,
-        DISREPUTE: disrepute,
-    }
-
-    category_mask_list = [VIOLENT, INAPPROPRIATE, SENSITIVE, INACCURATE, DISREPUTE]
-
-    # check points
-    check_list = {
-        violent: [
-            "No personal attacks",
-            "No discrimination",
-            "No threats or violence",
-            "No privacy violations",
-        ],
-        inappropriate: [
-            "No obscene language",
-            "No sexual content",
-            "Child-friendly",
-            "No harassment",
-        ],
-        sensitive: [
-            "No political promotion",
-            "No religious solicitation",
-        ],
-        inaccurate: [
-            "Accurate info",
-            "No rumors",
-            "Correct health info",
-        ],
-        disrepute: [
-            "Protection of brand image",
-            "No defamation or unwarranted criticism",
-            "Legal compliance and regulations",
-            "Adherence to company policies",
-        ],
-        # violent: [
-        #     "Legal compliance",
-        #     "Compliance with company policies",
-        #     "Use appropriate expressions for public communication",
-        #     "No violent or obscene content",
-        #     "No privacy violations",
-        #     "Protection of brand image",
-        #     "Confirmation of positive feedback",
-        #     "Maintain integrity in the message",
-        #     "Spam check",
-        #     "No political statements",
-        # ],
-    }
-
-    def get_check_category_list(check_category_mask=0b11111111):
-        ret = []
-        for mask in Criteria.category_mask_list:
-            if not check_category_mask & mask:
-                continue
-            ret.append(Criteria.category_mask_to_name[mask])
-        return ret
-
-    def get_check_point_list(check_category_mask=0b11111111):
-        ret = []
-        for mask in Criteria.category_mask_list:
-            if not check_category_mask & mask:
-                continue
-            for checkpoint in Criteria.check_list[Criteria.category_mask_to_name[mask]]:
-                if checkpoint not in ret:
-                    ret.append(checkpoint)
-        return list(ret)
-
-    def checkpoint_to_category(reason):
-        return [
-            category
-            for category, checklist in Criteria.check_list.items()
-            if reason in checklist
-        ]
-
-
 class CheckAI:
-    def __init__(self, api_key=None, azure_endpoint=None, model=None, async_mode=False):
+    def __init__(self, repeat, api_key, azure_endpoint, model, async_mode):
         self.async_mode = async_mode
+        self.repeat = repeat
+
         if async_mode:
             self.llm = llm.AsyncLLM(api_key, azure_endpoint, model)
         else:
             self.llm = llm.LLM(api_key, azure_endpoint, model)
 
-        self.check_system_template = PromptTemplate.from_template(
+        self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
             'Please evaluate the received text based on the following '
             'criteria to output JSON.\n'
             '# output\n'
             '```JSON\n'
-            '{checklist}'
+            '{criteria_prompt}'
             '```\n'
         )
-        # checkメソッドでチェックカテゴリの指定が無い場合、全てのチェック観点を使用する。
-        check_list_prompt = '{\n'
-        for check_point in Criteria.get_check_point_list(0b11111111):
-            check_list_prompt += f'  "{check_point}": True,\n'
-        check_list_prompt += '}\n'
-        self.default_check_system_prompt = self.check_system_template.format(
-            checklist=check_list_prompt
-        )
 
-    def _get_system_prompt(self, check_category):
-        if check_category is not None:
-            # チェックリストをシステムプロンプトに含めるJSON形式の文字列に成型
-            check_list_prompt = '{\n'
-            for check_point in Criteria.get_check_point_list(check_category):
-                check_list_prompt += f'  "{check_point}": True,\n'
-            check_list_prompt += '}\n'
-            # システムプロンプトの作成
-            system_prompt = self.check_system_template.format(
-                checklist=check_list_prompt
-            )
-        else:
-            system_prompt = self.default_check_system_prompt
+    def _get_system_prompt(self, category):
+        criteria_dict = {prompt: True for prompt in category.to_prompts()}
+        criteria_prompt = json.dumps(criteria_dict, indent=2)
+        system_prompt = self.system_template.format(criteria_prompt=criteria_prompt)
         return system_prompt
 
-    def _get_responce(self, system_prompt, content, repeat_check):
-        responces = []
-        if self.async_mode:
-            check_tasks = [
-                self.llm.json_mode_chat(system_prompt=system_prompt, prompt=content)
-                for _ in range(repeat_check)
-            ]
+    def _get_response(self, system_prompt, content):
+        messages = [{"role": "system", "content": system_prompt}] + [
+            {"role": "user", "content": content}
+        ]
 
-            responces = asyncio.get_event_loop().run_until_complete(
-                asyncio.gather(*check_tasks)
+        responses = []
+        if self.async_mode:
+            responses = asyncio.get_event_loop().run_until_complete(
+                asyncio.gather(
+                    *[self.llm.chat_as_json(messages) for _ in range(self.repeat)]
+                )
             )
         else:
-            for _ in range(repeat_check):
-                responces.append(
-                    self.llm.json_mode_chat(system_prompt=system_prompt, prompt=content)
-                )
-        return responces
+            responses.extend(
+                [self.llm.chat_as_json(messages) for _ in range(self.repeat)]
+            )
 
-    def check(self, content, check_category=None, repeat_check=1):
-        system_prompt = self._get_system_prompt(check_category)
-        responces = self._get_responce(system_prompt, content, repeat_check)
-        responces = [responce for responce in responces if responce is not None]
+        return responses
 
-        if not len(responces):
+    def check(self, content, category):
+        system_prompt = self._get_system_prompt(category)
+        responses = self._get_response(system_prompt, content)
+        responses = [response for response in responses if response is not None]
+
+        if not len(responses):
             return (False, ['Error'])
 
-        judgment = True
-        details = set([])
-        for responce in responces:
-            for key, value in responce.items():
-                if value is False:
-                    judgment = False
-                    details.add(key)
+        details = []
+        for response in responses:
+            details.extend([k for k, v in response.items() if not v])
+
+        judgment = bool(details)
 
         return (judgment, list(details))
 
@@ -183,12 +76,16 @@ class CheckAI:
 
 
 class MoralKeeperAI:
-    def __init__(self, api_key=None, azure_endpoint=None, model=None):
-        # AIからレスポンスを得る時に使用する。
-        self.api_key = api_key
-        self.azure_endpoint = azure_endpoint
-        self.model = model
-        # self.suggest_ai = SuggestAI(api_key, azure_endpoint, model)
+    def __init__(
+        self, api_key=None, azure_endpoint=None, model=None, async_mode=False, repeat=1
+    ):
+        self.check_ai = CheckAI(
+            api_key=api_key,
+            azure_endpoint=azure_endpoint,
+            model=model,
+            async_mode=async_mode,
+            repeat=repeat,
+        )
 
         # suggestメソッドのsystem prompt
         self.suggest_system_template = (
@@ -213,20 +110,15 @@ class MoralKeeperAI:
         )
         self.default_suggest_system_prompt = self.suggest_system_template
 
-    def check(self, content, check_category=None, repeat_check=1, async_mode=True):
-        check_ai = CheckAI(
-            self.api_key, self.azure_endpoint, self.model, async_mode=async_mode
-        )
-        return check_ai.check(
-            content=content, check_category=check_category, repeat_check=repeat_check
-        )
+    def check(self, content, category=Criteria.ALL):
+        return self.check_ai.check(content=content, category=category)
 
     def suggest(self, content):
         system_prompt = self.default_suggest_system_prompt
 
         ai = llm.LLM(system_prompt, json_mode=True)
         for _ in range(3):
-            responce = ai.chat(content)
-            if ret := responce.get('revised_and_moderated_comments', False):
+            response = ai.chat(content)
+            if ret := response.get('revised_and_moderated_comments', False):
                 return ret
         return None

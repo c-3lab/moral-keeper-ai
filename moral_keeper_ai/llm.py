@@ -1,37 +1,27 @@
 import json
 import os
-from os.path import dirname, join
 
-from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI, AzureOpenAI, BadRequestError
-
-dotenv_path = join(dirname(__file__), '../.env.local')
-load_dotenv(verbose=True, dotenv_path=dotenv_path)
+from openai import AsyncAzureOpenAI, AzureOpenAI, BadRequestError, RateLimitError
 
 
 class LLM:
     def __init__(self, api_key=None, azure_endpoint=None, model=None):
-        self.api_key = api_key if api_key is not None else os.getenv("AZURE_OPENAI_KEY")
-        self.azure_endpoint = (
-            azure_endpoint
-            if azure_endpoint is not None
-            else os.getenv("AZURE_ENDPOINT")
-        )
-        self.model = model if model is not None else os.getenv("LLM_MODEL")
-
+        self.model = model or os.getenv("LLM_MODEL")
         self.client = AzureOpenAI(
-            api_key=self.api_key,
+            api_key=api_key or os.getenv("AZURE_OPENAI_KEY"),
             api_version="2023-05-15",
-            azure_endpoint=self.azure_endpoint,
+            azure_endpoint=azure_endpoint or os.getenv("AZURE_ENDPOINT"),
+            max_retries=10,
+            timeout=300,
         )
 
-    def chat(self, system_prompt: str, prompt: str):
-        prompt = [{"role": "system", "content": system_prompt}] + [
-            {"role": "user", "content": prompt}
+    def chat(self, system_prompt: str, content: str):
+        messages = [{"role": "system", "content": system_prompt}] + [
+            {"role": "user", "content": content}
         ]
         try:
             response = self.client.chat.completions.create(
-                model=self.model, messages=prompt
+                model=self.model, messages=messages
             )
         except BadRequestError as e:
             return e
@@ -41,16 +31,14 @@ class LLM:
 
         return response.choices[0].message.content
 
-    def json_mode_chat(self, system_prompt, prompt: str):
-        prompt = [{"role": "system", "content": system_prompt}] + [
-            {"role": "user", "content": prompt}
-        ]
+    def chat_as_json(self, messages):
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 response_format={"type": "json_object"},
-                messages=prompt,
+                messages=messages,
             )
+            return json.loads(response.choices[0].message.content)
         except BadRequestError:
             return {
                 "OpenAI Filter": False,
@@ -59,26 +47,25 @@ class LLM:
             print(e)
             return None
 
-        return json.loads(response.choices[0].message.content)
 
-
-class AsyncLLM(LLM):
+class AsyncLLM:
     def __init__(self, api_key=None, azure_endpoint=None, model=None):
-        super().__init__(api_key, azure_endpoint, model)
-
+        self.model = model or os.getenv("LLM_MODEL")
         self.client = AsyncAzureOpenAI(
-            api_key=self.api_key,
+            api_key=api_key or os.getenv("AZURE_OPENAI_KEY"),
             api_version="2023-05-15",
-            azure_endpoint=self.azure_endpoint,
+            azure_endpoint=azure_endpoint or os.getenv("AZURE_ENDPOINT"),
+            max_retries=10,
+            timeout=300,
         )
 
-    async def chat(self, system_prompt, prompt: str):
-        prompt = [{"role": "system", "content": system_prompt}] + [
-            {"role": "user", "content": prompt}
+    async def chat(self, system_prompt, content: str):
+        messages = [{"role": "system", "content": system_prompt}] + [
+            {"role": "user", "content": content}
         ]
         try:
             response = await self.client.chat.completions.create(
-                model=self.model, messages=prompt
+                model=self.model, messages=messages
             )
         except Exception as e:
             print(e)
@@ -86,22 +73,25 @@ class AsyncLLM(LLM):
 
         return response.choices[0].message.content
 
-    async def json_mode_chat(self, system_prompt, prompt: str):
-        prompt = [{"role": "system", "content": system_prompt}] + [
-            {"role": "user", "content": prompt}
-        ]
+    async def chat_as_json(self, messages):
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 response_format={"type": "json_object"},
-                messages=prompt,
+                messages=messages,
             )
+            return json.loads(response.choices[0].message.content)
         except BadRequestError:
+            print("BadRequestError")
             return {
                 "OpenAI Filter": False,
             }
-        except Exception as e:
+        except RateLimitError as e:
+            print("RateLimitError")
+            print(e.response.headers)
             print(e)
             return None
-
-        return json.loads(response.choices[0].message.content)
+        except Exception as e:
+            print("Other Error")
+            print(e)
+            return None

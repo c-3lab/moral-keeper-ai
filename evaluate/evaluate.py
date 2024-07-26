@@ -1,10 +1,15 @@
 import json
 import os
+from os.path import dirname, join
 
 import click
+from dotenv import load_dotenv
 from prettytable import PrettyTable
 
 from moral_keeper_ai import Criteria, MoralKeeperAI
+
+dotenv_path = join(dirname(__file__), '../.env.local')
+load_dotenv(verbose=True, dotenv_path=dotenv_path)
 
 
 def get_test_comments(lang):
@@ -43,7 +48,7 @@ class ai_check_analysis:
         # 集計用中間テーブル
         self.check_result_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
-            + Criteria.get_check_point_list()
+            + Criteria.to_prompts(Criteria.ALL)
             + ['OpenAI Filter', 'Others']
         )
         self.check_result_table = []
@@ -171,7 +176,7 @@ class ai_check_analysis:
         ] + self._get_comment_categorys()
         reason_categorys = (
             ['OK']
-            + Criteria.get_check_category_list()
+            + [Criteria.to_str(criteria) for criteria in Criteria.MAPPINGS.keys()]
             + ['OpenAI Filter', 'Error', 'Others']
         )
         # 表の初期化
@@ -192,7 +197,7 @@ class ai_check_analysis:
                 ] += 1
             else:
                 # check NG
-                for reason in Criteria.get_check_point_list() + ['OpenAI Filter']:
+                for reason in Criteria.to_prompts(Criteria.ALL) + ['OpenAI Filter']:
                     if check_result_row[reason]:
                         # NG理由がヒットしていた場合
                         if reason == 'OpenAI Filter':
@@ -202,11 +207,13 @@ class ai_check_analysis:
                             reason_category = 'Error'
                             hit_categorys.add(reason_category)
                         else:
-                            for reason_category in Criteria.checkpoint_to_category(
-                                reason
-                            ):
-                                # 同一カテゴリ内の複数理由がヒットしても、カテゴリのカウントは+1にする。
-                                hit_categorys.add(reason_category)
+                            hit_categorys.add(
+                                *[
+                                    Criteria.to_str(criteria)
+                                    for criteria in Criteria.MAPPINGS.keys()
+                                    if criteria & Criteria.from_prompt(reason)
+                                ]
+                            )
                 for hited_category in list(hit_categorys):
                     _category_analysis_table[hited_category][
                         check_result_row['comment_category']
@@ -235,16 +242,16 @@ class ai_check_analysis:
             'prompt',
             'category',
         ] + self._get_comment_categorys()
-        checkpoints = Criteria.get_check_point_list() + ['Others']
+        checkpoints = Criteria.to_prompts(Criteria.ALL) + ['Others']
 
         # 表の初期化
         for checkpoint in checkpoints:
             row = {}
             row.setdefault('prompt', checkpoint)
-            for category in Criteria.checkpoint_to_category(checkpoint):
+            for category in Criteria.from_prompt(checkpoint):
                 if checkpoint == 'Others':
-                    category = 'others'
-                row.setdefault('category', category)
+                    category = Criteria.OTHERS
+                row.setdefault('category', *[Criteria.to_str(category)])
             for col_name in checkpoint_analysis_table_header:
                 row.setdefault(col_name, 0)
             _checkpoint_analysis_table[checkpoint] = row
@@ -256,7 +263,7 @@ class ai_check_analysis:
                 pass
             else:
                 # check NG
-                for reason in Criteria.get_check_point_list():
+                for reason in Criteria.to_prompts(Criteria.ALL):
                     if check_result_row[reason]:
                         _checkpoint_analysis_table[reason][
                             check_result_row['comment_category']
@@ -295,9 +302,7 @@ def main(lang):
     for categorys in test_data_list.values():
         for comments in categorys.values():
             for comment in comments:
-                judgement, ng_reasons = ai.check(
-                    comment, repeat_check=3, async_mode=False
-                )
+                judgement, ng_reasons = ai.check(comment)
                 analyst.register(comment=comment, ng_reasons=ng_reasons)
 
     analyst.print_result()
