@@ -296,7 +296,7 @@ def main(lang):
     test_data_list = get_test_comments(lang)
 
     # スクリプトのエントリーポイント
-    ai = MoralKeeperAI()
+    ai = MoralKeeperAI(model='gpt-4o', repeat=3)
     analyst = ai_check_analysis(lang)
 
     for categorys in test_data_list.values():
