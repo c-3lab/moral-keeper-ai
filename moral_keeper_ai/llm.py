@@ -40,17 +40,19 @@ class LLM:
             if not json_mode:
                 return None
             else:
-                return {
-                    "OpenAI Filter": False,
-                }
+                return [
+                    {
+                        "OpenAI Filter": False,
+                    }
+                ]
         except RateLimitError as e:
             # TODO: 握りつぶさない
             print("RateLimitError")
             print(e.response.headers)
             print(e)
-            return None
+            raise e
         except Exception as e:
             # TODO: 握りつぶさない
             print("Other Error")
             print(e)
-            return None
+            raise e
