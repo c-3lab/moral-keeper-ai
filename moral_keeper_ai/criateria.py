@@ -13,32 +13,24 @@ class Criteria(IntFlag):
 
     MAPPINGS = nonmember(
         {
-            VIOLENT: [
-                "No personal attacks",
-                "No discrimination",
-                "No threats or violence",
-                "No privacy violations",
-            ],
+            VIOLENT: [],
             INAPPROPRIATE: [
-                "No obscene language",
-                "No sexual content",
-                "Child-friendly",
-                "No harassment",
+                "Compliance with company policies",
+                "Use appropriate expressions for public communication",
+                "The comment contains no personal information",
             ],
             SENSITIVE: [
-                "No political promotion",
-                "No religious solicitation",
+                "Does not contain personal opinions on religion or politics in the "
+                "content or context",
             ],
             INACCURATE: [
-                "Accurate info",
                 "No rumors",
-                "Correct health info",
+                "Information, if included, must be accurate",
             ],
             DISREPUTE: [
                 "Protection of brand image",
-                "No defamation or unwarranted criticism",
-                "Legal compliance and regulations",
-                "Adherence to company policies",
+                "Does not suggest non-compliance or legal violations",
+                "The feedback is not negative",
             ],
         }
     )
