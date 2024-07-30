@@ -46,12 +46,12 @@ class ai_check_analysis:
         }
 
         # 集計用中間テーブル
-        self.check_result_table_header = (
+        self.summary_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
             + Criteria.to_prompts(Criteria.ALL)
-            + ['OpenAI Filter', 'Others']
+            + ['OpenAI Filter', 'Others', 'Error']
         )
-        self.check_result_table = []
+        self.summary_table = []
 
         # 各コメントカテゴリ内のコメント数
         self.comment_count = {}
@@ -108,39 +108,45 @@ class ai_check_analysis:
         f1_score = 2 * (precision * recall) / (precision + recall)
         print(f"調和平均:{f1_score*100} %")
 
-    def register(self, comment: str, ng_reasons: list) -> None:
+    def register(self, comment: str, judgment: bool, ng_reasons: list) -> None:
         expect = self._comment_to_expect(comment)
         comment_category = self._comment_to_category(comment)
 
-        # 中間集計表へcheck結果を登録
-        check_result_row = {}
-        self.comment_num += 1
-        self.comment_count[comment_category] += 1
+        # 中間集計表に新規追加するrow辞書の初期化
+        summary_row = {}
+        summary_row['num'] = self.comment_num
+        summary_row['comment_category'] = comment_category
+        summary_row['comment'] = comment
+        for col_name in self.summary_table_header:
+            summary_row.setdefault(col_name, 0)
 
-        # ヘッダーの順序でrow辞書作成
-        check_result_row['num'] = self.comment_num
-        check_result_row['comment_category'] = comment_category
-        check_result_row['comment'] = comment
-        for col_name in self.check_result_table_header:
-            check_result_row.setdefault(col_name, 0)
-
-        # check True/False 理由集計
-        if 0 == len(ng_reasons):
-            check_result_row['OK'] = 1
+        # ng_reasons 集計
+        if judgment:
+            if len(ng_reasons) != 0:
+                raise Exception
+            summary_row['OK'] = 1
+        for ng_reason in ng_reasons:
+            if ng_reason in summary_row.keys():
+                summary_row[ng_reason] = 1
+            else:
+                summary_row['Others'] += 1
+        if 'RateLimitError' in ng_reasons:
+            summary_row['Error'] = 1
         else:
-            for ng_reason in ng_reasons:
-                if ng_reason in check_result_row.keys():
-                    check_result_row[ng_reason] = 1
-                else:
-                    check_result_row['Others'] += 1
+            # コメント総数、カテゴリ別コメント数追加
+            self.comment_num += 1
+            self.comment_count[comment_category] += 1
 
         # rowをテーブルに追加
-        self.check_result_table.append(check_result_row)
+        self.summary_table.append(summary_row)
 
         # ログ表示
         print(f"expect:{expect} ", end='')
         # 期待と結果が一致しない場合は赤色、一致する場合は緑色。
-        if expect == bool(check_result_row['OK']):
+        if bool(summary_row['Error']):
+            # Errorは集計対象外
+            pass
+        elif expect == bool(summary_row['OK']):
             if expect is True:
                 self.f1_table['true_positive'] += 1
             else:
@@ -161,10 +167,10 @@ class ai_check_analysis:
 
     def print_result(self):
         # print("--------集計表---------")
-        # check_result_table = PrettyTable(field_names=self.check_result_table_header)
-        # for row in self.check_result_table:
-        #     check_result_table.add_row(row.values())
-        # print(check_result_table, end="\n\n")
+        # summary_table = PrettyTable(field_names=self.summary_table_header)
+        # for row in self.summary_table:
+        #     summary_table.add_row(row.values())
+        # print(summary_table, end="\n\n")
 
         print(
             "--------各プロンプトカテゴリが、どのコメントカテゴリでNGを出したか---------"
@@ -188,17 +194,15 @@ class ai_check_analysis:
             _category_analysis_table[reason_category] = row
 
         # 値を登録する。
-        for check_result_row in self.check_result_table:
+        for summary_row in self.summary_table:
             # 集計表の行から、理由を走査する。
             hit_categorys = set([])
-            if check_result_row['OK']:
-                _category_analysis_table['OK'][
-                    check_result_row['comment_category']
-                ] += 1
+            if summary_row['OK']:
+                _category_analysis_table['OK'][summary_row['comment_category']] += 1
             else:
                 # check NG
                 for reason in Criteria.to_prompts(Criteria.ALL) + ['OpenAI Filter']:
-                    if check_result_row[reason]:
+                    if summary_row[reason]:
                         # NG理由がヒットしていた場合
                         if reason == 'OpenAI Filter':
                             reason_category = 'OpenAI Filter'
@@ -216,12 +220,12 @@ class ai_check_analysis:
                             )
                 for hited_category in list(hit_categorys):
                     _category_analysis_table[hited_category][
-                        check_result_row['comment_category']
+                        summary_row['comment_category']
                     ] += 1
 
-                if others := check_result_row['Others']:
+                if others := summary_row['Others']:
                     _category_analysis_table['Others'][
-                        check_result_row['comment_category']
+                        summary_row['comment_category']
                     ] += others
 
         # テーブル作成、表示
@@ -257,21 +261,21 @@ class ai_check_analysis:
             _checkpoint_analysis_table[checkpoint] = row
 
         # 値を登録する。
-        for check_result_row in self.check_result_table:
+        for summary_row in self.summary_table:
             # 集計表の行から、理由を走査する。
-            if check_result_row['OK']:
+            if summary_row['OK']:
                 pass
             else:
                 # check NG
                 for reason in Criteria.to_prompts(Criteria.ALL):
-                    if check_result_row[reason]:
+                    if summary_row[reason]:
                         _checkpoint_analysis_table[reason][
-                            check_result_row['comment_category']
+                            summary_row['comment_category']
                         ] += 1
 
-                if others := check_result_row['Others']:
+                if others := summary_row['Others']:
                     _checkpoint_analysis_table['Others'][
-                        check_result_row['comment_category']
+                        summary_row['comment_category']
                     ] += others
 
         # テーブル作成、表示
@@ -303,7 +307,7 @@ def main(lang):
         for comments in categorys.values():
             for comment in comments:
                 judgement, ng_reasons = ai.check(comment)
-                analyst.register(comment=comment, ng_reasons=ng_reasons)
+                analyst.register(comment, judgement, ng_reasons)
 
     analyst.print_result()
 

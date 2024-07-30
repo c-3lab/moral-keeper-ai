@@ -63,6 +63,7 @@ class Criteria(IntFlag):
         }
         return criteria_to_str[criteria]
 
+    @staticmethod
     def from_prompt(prompt):
         criteria = 0
         for k, v in Criteria.MAPPINGS.items():

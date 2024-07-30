@@ -8,8 +8,8 @@ from .llm import LLM
 
 
 class CheckAI:
-    def __init__(self, repeat, api_key, azure_endpoint, model):
-        self.llm = LLM(repeat, api_key, azure_endpoint, model)
+    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
+        self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
@@ -22,11 +22,11 @@ class CheckAI:
         )
 
     def check(self, content, category):
-        criteria_dict = {prompt: True for prompt in category.to_prompts()}
-        system_prompt = self.system_template.format(
-            criteria_prompt=json.dumps(criteria_dict, indent=2)
+        _criteria_dict = {prompt: True for prompt in category.to_prompts()}
+        _system_prompt = self.system_template.format(
+            criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
-        messages = [{"role": "system", "content": system_prompt}] + [
+        messages = [{"role": "system", "content": _system_prompt}] + [
             {"role": "user", "content": content}
         ]
         details = []
@@ -45,9 +45,19 @@ class CheckAI:
 
 
 class MoralKeeperAI:
-    def __init__(self, api_key=None, azure_endpoint=None, model=None, repeat=1):
+    def __init__(
+        self,
+        api_key=None,
+        azure_endpoint=None,
+        model=None,
+        repeat=1,
+        timeout=60,
+        max_retries=3,
+    ):
         self.check_ai = CheckAI(
             repeat=repeat,
+            timeout=timeout,
+            max_retries=max_retries,
             api_key=api_key,
             azure_endpoint=azure_endpoint,
             model=model,
