@@ -21,8 +21,8 @@ class CheckAI:
             '```\n'
         )
 
-    def check(self, content, category):
-        _criteria_dict = {prompt: True for prompt in category.to_prompts()}
+    def check(self, content, criteria):
+        _criteria_dict = {criterion: True for criterion in criteria.to_prompts()}
         _system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
@@ -108,8 +108,8 @@ class MoralKeeperAI:
             model=model,
         )
 
-    def check(self, content, category=Criteria.ALL):
-        return self.check_ai.check(content=content, category=category)
+    def check(self, content, criteria=Criteria.ALL):
+        return self.check_ai.check(content=content, criteria=criteria)
 
     def suggest(self, content):
         return self.suggest_ai.suggest(content=content)
