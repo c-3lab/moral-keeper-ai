@@ -45,7 +45,7 @@ class SuggestAI:
     def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
         self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
 
-        self.system_template = (
+        self.system_template_without_checkpoints = (
             'You are a professional content moderator.\n'
             '# Task Description\n'
             '- If the received text contains anti-comments, baseless accusations, or '
@@ -66,8 +66,41 @@ class SuggestAI:
             '```\n'
         )
 
-    def suggest(self, content):
-        system_prompt = self.system_template
+        self.system_template_with_checkpoints = PromptTemplate.from_template(
+            'You are a professional content moderator.\n'
+            '# Task Description\n'
+            '- If the received text contains anti-comments, baseless accusations, '
+            'extreme expressions, or does not meet the #checkpoints, '
+            'perform the following tasks.\n'
+            '- Alleviate the expressions in the received text, '
+            'creating a revised version that removes offensive, defamatory, '
+            'or excessively extreme expressions, '
+            'and ensures compliance with the #checkpoints.\n'
+            '- Adjust the text to appropriate expressions while retaining the '
+            'original intent of the comment.\n\n'
+            'The purpose of this task is to maintain a healthy communication '
+            'environment on the site while maximizing respect for the intent of the '
+            'comments.\n\n'
+            '# checkpoints\n'
+            '{checkpoints}\n\n'
+            '# output\n'
+            '```JSON\n'
+            '{{\n'
+            '    "revised_and_moderated_comments": ""\n'
+            '}}\n'
+            '```\n'
+        )
+
+    def suggest(self, content, criteria, perspectives):
+        checkpoints = criteria.to_prompts()
+        if perspectives:
+            checkpoints.extend(perspectives)
+        if len(checkpoints) == 0:
+            system_prompt = self.system_template_without_checkpoints
+        else:
+            system_prompt = self.system_template_with_checkpoints.format(
+                checkpoints=json.dumps(checkpoints, indent=2)
+            )
         messages = [{"role": "system", "content": system_prompt}] + [
             {"role": "user", "content": content}
         ]
@@ -115,5 +148,7 @@ class MoralKeeperAI:
             content=content, criteria=criteria, perspectives=perspectives
         )
 
-    def suggest(self, content):
-        return self.suggest_ai.suggest(content=content)
+    def suggest(self, content, criteria=Criteria.NONE, perspectives=[]):
+        return self.suggest_ai.suggest(
+            content=content, criteria=criteria, perspectives=perspectives
+        )

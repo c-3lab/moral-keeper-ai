@@ -2,6 +2,7 @@ from enum import IntFlag, auto, nonmember
 
 
 class Criteria(IntFlag):
+    NONE = 0
     VIOLENT = auto()
     INAPPROPRIATE = auto()
     SENSITIVE = auto()
