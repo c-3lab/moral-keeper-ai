@@ -21,8 +21,10 @@ class CheckAI:
             '```\n'
         )
 
-    def check(self, content, criteria):
+    def check(self, content, criteria, perspectives):
         _criteria_dict = {criterion: True for criterion in criteria.to_prompts()}
+        if perspectives:
+            _criteria_dict.update({perspective: True for perspective in perspectives})
         _system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
@@ -108,8 +110,10 @@ class MoralKeeperAI:
             model=model,
         )
 
-    def check(self, content, criteria=Criteria.ALL):
-        return self.check_ai.check(content=content, criteria=criteria)
+    def check(self, content, criteria=Criteria.ALL, perspectives=[]):
+        return self.check_ai.check(
+            content=content, criteria=criteria, perspectives=perspectives
+        )
 
     def suggest(self, content):
         return self.suggest_ai.suggest(content=content)
