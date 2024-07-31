@@ -39,9 +39,9 @@ class CheckAI:
         return (judgment, details)
 
 
-# class SuggestAI(LLM):
-#     def __init__(self, api_key=None, azure_endpoint=None, model=None):
-#         pass
+class SuggestAI:
+    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
+        self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
 
 
 class MoralKeeperAI:
@@ -55,6 +55,14 @@ class MoralKeeperAI:
         max_retries=3,
     ):
         self.check_ai = CheckAI(
+            repeat=repeat,
+            timeout=timeout,
+            max_retries=max_retries,
+            api_key=api_key,
+            azure_endpoint=azure_endpoint,
+            model=model,
+        )
+        self.suggest_ai = SuggestAI(
             repeat=repeat,
             timeout=timeout,
             max_retries=max_retries,
@@ -92,9 +100,21 @@ class MoralKeeperAI:
     def suggest(self, content):
         system_prompt = self.default_suggest_system_prompt
 
-        ai = LLM(system_prompt, json_mode=True)
         for _ in range(3):
-            response = ai.chat(content)
-            if ret := response.get('revised_and_moderated_comments', False):
-                return ret
+            response = self.suggest_ai.llm.chat(
+                [
+                    {
+                        'role': 'system',
+                        'content': system_prompt,
+                    },
+                    {
+                        'role': 'user',
+                        'content': content,
+                    },
+                ],
+                json_mode=True,
+            )
+            for ans in response:
+                if ret := ans.get('revised_and_moderated_comments', False):
+                    return ret
         return None
