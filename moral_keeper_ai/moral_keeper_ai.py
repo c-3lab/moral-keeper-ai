@@ -66,19 +66,13 @@ class SuggestAI:
 
     def suggest(self, content):
         system_prompt = self.system_template
+        messages = [{"role": "system", "content": system_prompt}] + [
+            {"role": "user", "content": content}
+        ]
 
         for _ in range(3):
             response = self.llm.chat(
-                [
-                    {
-                        'role': 'system',
-                        'content': system_prompt,
-                    },
-                    {
-                        'role': 'user',
-                        'content': content,
-                    },
-                ],
+                messages,
                 json_mode=True,
             )
             for ans in response:
