@@ -43,6 +43,49 @@ class SuggestAI:
     def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
         self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
 
+        self.system_template = (
+            'You are a professional content moderator.\n'
+            '# Task Description\n'
+            '- If the received text contains anti-comments, baseless accusations, or '
+            'extreme expressions, perform the following tasks.\n'
+            '- Alleviate the expressions in the received text, creating a revised '
+            'version that removes offensive, defamatory, or excessively extreme '
+            'expressions.\n'
+            '- Adjust the text to appropriate expressions while retaining the '
+            'original intent of the comment.\n\n'
+            'The purpose of this task is to maintain a healthy communication '
+            'environment on the site while maximizing respect for the intent of the '
+            'comments.\n\n'
+            '# output\n'
+            '```JSON\n'
+            '{\n'
+            '    "revised_and_moderated_comments": ""\n'
+            '}\n'
+            '```\n'
+        )
+
+    def suggest(self, content):
+        system_prompt = self.system_template
+
+        for _ in range(3):
+            response = self.llm.chat(
+                [
+                    {
+                        'role': 'system',
+                        'content': system_prompt,
+                    },
+                    {
+                        'role': 'user',
+                        'content': content,
+                    },
+                ],
+                json_mode=True,
+            )
+            for ans in response:
+                if ret := ans.get('revised_and_moderated_comments', False):
+                    return ret
+        return None
+
 
 class MoralKeeperAI:
     def __init__(
@@ -71,50 +114,8 @@ class MoralKeeperAI:
             model=model,
         )
 
-        # suggestメソッドのsystem prompt
-        self.suggest_system_template = (
-            'You are a professional content moderator.\n'
-            '# Task Description\n'
-            '- If the received text contains anti-comments, baseless accusations, or '
-            'extreme expressions, perform the following tasks.\n'
-            '- Alleviate the expressions in the received text, creating a revised '
-            'version that removes offensive, defamatory, or excessively extreme '
-            'expressions.\n'
-            '- Adjust the text to appropriate expressions while retaining the '
-            'original intent of the comment.\n\n'
-            'The purpose of this task is to maintain a healthy communication '
-            'environment on the site while maximizing respect for the intent of the '
-            'comments.\n\n'
-            '# output\n'
-            '```JSON\n'
-            '{\n'
-            '    "revised_and_moderated_comments": ""\n'
-            '}\n'
-            '```\n'
-        )
-        self.default_suggest_system_prompt = self.suggest_system_template
-
     def check(self, content, category=Criteria.ALL):
         return self.check_ai.check(content=content, category=category)
 
     def suggest(self, content):
-        system_prompt = self.default_suggest_system_prompt
-
-        for _ in range(3):
-            response = self.suggest_ai.llm.chat(
-                [
-                    {
-                        'role': 'system',
-                        'content': system_prompt,
-                    },
-                    {
-                        'role': 'user',
-                        'content': content,
-                    },
-                ],
-                json_mode=True,
-            )
-            for ans in response:
-                if ret := ans.get('revised_and_moderated_comments', False):
-                    return ret
-        return None
+        return self.suggest_ai.suggest(content=content)
