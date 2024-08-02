@@ -2,14 +2,16 @@ import json
 
 from langchain_core.prompts import PromptTemplate
 
-from moral_keeper_ai.criateria import Criteria
+from moral_keeper_ai.criateria import Criteria, ExtraCriteria
 
-from .llm import LLM
+from .llm import LLM, AsyncLLM
 
 
 class CheckAI:
     def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
-        self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
+        self.llm = AsyncLLM(
+            repeat, timeout, max_retries, api_key, azure_endpoint, model
+        )
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
@@ -28,14 +30,38 @@ class CheckAI:
         _system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
-        messages = [{"role": "system", "content": _system_prompt}] + [
-            {"role": "user", "content": content}
+        requests = [
+            {
+                'model': 'gpt-4o',
+                'message': [
+                    {"role": "system", "content": _system_prompt},
+                    {"role": "user", "content": content},
+                ],
+            }
         ]
+
+        if category == Criteria.ALL:
+            _criteria_dict = {prompt: True for prompt in ExtraCriteria.ALL.to_prompts()}
+            _system_prompt = self.system_template.format(
+                criteria_prompt=json.dumps(_criteria_dict, indent=2)
+            )
+            requests += [
+                {
+                    'model': 'gpt-35-turbo',
+                    'message': [
+                        {"role": "system", "content": _system_prompt},
+                        {"role": "user", "content": content},
+                    ],
+                }
+            ]
+
+        responses = self.llm.chat(requests, json_mode=True)
+
         details = []
-        for ans in self.llm.chat(messages, json_mode=True):
-            if ans is not None:
+        for response in responses:
+            if response is not None:
                 print('.', end='')
-                details.extend([k for k, v in ans.items() if not v])
+                details.extend([k for k, v in response.items() if not v])
         details = list(dict.fromkeys(details))
         judgment = bool(0 == len(details))
         return (judgment, details)

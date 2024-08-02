@@ -300,7 +300,7 @@ def main(lang):
     test_data_list = get_test_comments(lang)
 
     # スクリプトのエントリーポイント
-    ai = MoralKeeperAI(model='gpt-4o', repeat=3)
+    ai = MoralKeeperAI(repeat=3, timeout=120, max_retries=10)
     analyst = ai_check_analysis(lang)
 
     for categorys in test_data_list.values():
