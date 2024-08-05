@@ -40,7 +40,7 @@ class CheckAI:
             }
         ]
 
-        if category == Criteria.ALL:
+        if criteria == Criteria.ALL:
             _criteria_dict = {prompt: True for prompt in ExtraCriteria.ALL.to_prompts()}
             _system_prompt = self.system_template.format(
                 criteria_prompt=json.dumps(_criteria_dict, indent=2)
