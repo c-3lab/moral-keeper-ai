@@ -78,8 +78,13 @@ export LLM_MODEL='モデル名/デプロイ名'
 ```
 
 ## ディレクトリ構成
-
-## 開発環境
+<pre>
+.  
+├── moral_keeper_ai：モジュール本体  
+├── tests：pytest資材  
+└── evaluate：検証用プログラム  
+  └──data：テストコメントファイル格納先
+</pre>
 
 ## LICENSE
 
