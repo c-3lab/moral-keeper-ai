@@ -113,7 +113,7 @@ class ExtraCriteria(IntFlag):
 
     def to_prompts(self) -> list:
         prompts = []
-        for k, v in Criteria.MAPPINGS.items():
+        for k, v in ExtraCriteria.MAPPINGS.items():
             if self & k:
                 prompts.extend(v)
 
@@ -122,19 +122,19 @@ class ExtraCriteria(IntFlag):
     @staticmethod
     def to_str(criteria) -> str:
         criteria_to_str = {
-            Criteria.VIOLENT: 'violent',
-            Criteria.INAPPROPRIATE: 'inappropriate',
-            Criteria.SENSITIVE: 'sensitive',
-            Criteria.INACCURATE: 'inaccurate',
-            Criteria.DISREPUTE: 'disrepute',
-            Criteria.OTHERS: 'others',
+            ExtraCriteria.VIOLENT: 'violent',
+            ExtraCriteria.INAPPROPRIATE: 'inappropriate',
+            ExtraCriteria.SENSITIVE: 'sensitive',
+            ExtraCriteria.INACCURATE: 'inaccurate',
+            ExtraCriteria.DISREPUTE: 'disrepute',
+            ExtraCriteria.OTHERS: 'others',
         }
         return criteria_to_str[criteria]
 
     @staticmethod
     def from_prompt(prompt):
         criteria = 0
-        for k, v in Criteria.MAPPINGS.items():
+        for k, v in ExtraCriteria.MAPPINGS.items():
             if prompt in v:
                 criteria |= k
 
