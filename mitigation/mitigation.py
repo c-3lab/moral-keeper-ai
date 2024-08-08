@@ -64,7 +64,7 @@ class ai_check_analysis:
         if str in ["false", "False", "FALSE"]:
             return False
         return None
-    
+
     def _get_comment_categorys(self):
         comment_categorys = []
         for categorys in self.test_comments.values():
@@ -108,7 +108,9 @@ class ai_check_analysis:
         f1_score = 2 * (precision * recall) / (precision + recall)
         print(f"調和平均:{f1_score*100} %")
 
-    def register(self, comment: str, judgment: bool, ng_reasons: list, mitigation_comment) -> None:
+    def register(
+        self, comment: str, judgment: bool, ng_reasons: list, mitigation_comment
+    ) -> None:
         expect = self._comment_to_expect(comment)
         comment_category = self._comment_to_category(comment)
 
@@ -146,7 +148,7 @@ class ai_check_analysis:
         if bool(summary_row['Error']):
             # Errorは集計対象外
             pass
-        elif expect == bool(summary_row['OK']):
+        elif expect == judgment:
             if expect is True:
                 self.f1_table['true_positive'] += 1
             else:
@@ -165,6 +167,134 @@ class ai_check_analysis:
         # 文字色を戻す。
         print("\033[39m", end='')
 
+    def print_result(self):
+        # print("--------集計表---------")
+        # summary_table = PrettyTable(field_names=self.summary_table_header)
+        # for row in self.summary_table:
+        #     summary_table.add_row(row.values())
+        # print(summary_table, end="\n\n")
+
+        print(
+            "--------各プロンプトカテゴリが、どのコメントカテゴリでNGを出したか---------"
+        )
+        # 表の主キーリストとカラム名リストを作る
+        _category_analysis_table = {}
+        category_analysis_table_header = [
+            'AI \\ comment'
+        ] + self._get_comment_categorys()
+        reason_categorys = (
+            ['OK']
+            + [Criteria.to_str(criteria) for criteria in Criteria.MAPPINGS.keys()]
+            + ['OpenAI Filter', 'Error', 'Others']
+        )
+        # 表の初期化
+        for reason_category in reason_categorys:
+            row = {}
+            row.setdefault('AI \\ comment', reason_category)
+            for col_name in category_analysis_table_header:
+                row.setdefault(col_name, 0)
+            _category_analysis_table[reason_category] = row
+
+        # 値を登録する。
+        for summary_row in self.summary_table:
+            # 集計表の行から、理由を走査する。
+            hit_categorys = set([])
+            if summary_row['OK']:
+                _category_analysis_table['OK'][summary_row['comment_category']] += 1
+            else:
+                # check NG
+                for reason in Criteria.to_prompts(Criteria.ALL) + ['OpenAI Filter']:
+                    if summary_row[reason]:
+                        # NG理由がヒットしていた場合
+                        if reason == 'OpenAI Filter':
+                            reason_category = 'OpenAI Filter'
+                            hit_categorys.add(reason_category)
+                        elif reason == 'Error':
+                            reason_category = 'Error'
+                            hit_categorys.add(reason_category)
+                        else:
+                            hit_categorys.add(
+                                *[
+                                    Criteria.to_str(criteria)
+                                    for criteria in Criteria.MAPPINGS.keys()
+                                    if criteria & Criteria.from_prompt(reason)
+                                ]
+                            )
+                for hited_category in list(hit_categorys):
+                    _category_analysis_table[hited_category][
+                        summary_row['comment_category']
+                    ] += 1
+
+                if others := summary_row['Others']:
+                    _category_analysis_table['Others'][
+                        summary_row['comment_category']
+                    ] += others
+
+        # テーブル作成、表示
+        category_analysis_table = PrettyTable(
+            field_names=category_analysis_table_header
+        )
+        for row in _category_analysis_table.values():
+            # 件数をパーセンテージに変換
+            for col_name, value in row.items():
+                if comment_count := self.comment_count.get(col_name):
+                    row[col_name] = round((value / comment_count) * 100, 1)
+            category_analysis_table.add_row(row.values())
+        print(category_analysis_table, end="\n\n")
+
+        print("--------各チェック項目が、どのカテゴリのコメントでNGを出したか---------")
+        _checkpoint_analysis_table = {}
+        checkpoint_analysis_table_header = [
+            'prompt',
+            'category',
+        ] + self._get_comment_categorys()
+        checkpoints = Criteria.to_prompts(Criteria.ALL) + ['Others']
+
+        # 表の初期化
+        for checkpoint in checkpoints:
+            row = {}
+            row.setdefault('prompt', checkpoint)
+            for category in Criteria.from_prompt(checkpoint):
+                if checkpoint == 'Others':
+                    category = Criteria.OTHERS
+                row.setdefault('category', *[Criteria.to_str(category)])
+            for col_name in checkpoint_analysis_table_header:
+                row.setdefault(col_name, 0)
+            _checkpoint_analysis_table[checkpoint] = row
+
+        # 値を登録する。
+        for summary_row in self.summary_table:
+            # 集計表の行から、理由を走査する。
+            if summary_row['OK']:
+                pass
+            else:
+                # check NG
+                for reason in Criteria.to_prompts(Criteria.ALL):
+                    if summary_row[reason]:
+                        _checkpoint_analysis_table[reason][
+                            summary_row['comment_category']
+                        ] += 1
+
+                if others := summary_row['Others']:
+                    _checkpoint_analysis_table['Others'][
+                        summary_row['comment_category']
+                    ] += others
+
+        # テーブル作成、表示
+        checkpoint_analysis_table = PrettyTable(
+            field_names=checkpoint_analysis_table_header
+        )
+        for row in _checkpoint_analysis_table.values():
+            # 件数をパーセンテージに変換
+            for col_name, value in row.items():
+                if comment_count := self.comment_count.get(col_name):
+                    row[col_name] = round((value / comment_count) * 100, 1)
+            checkpoint_analysis_table.add_row(row.values())
+        print(checkpoint_analysis_table, end="\n\n")
+
+        print(f"{self.f1_table}")
+        self._f1_score(**self.f1_table)
+
 
 @click.command()
 @click.argument('lang')
@@ -176,6 +306,7 @@ def main(lang):
     criteria_list = [Criteria.NONE, Criteria.ALL]
 
     for criteria in criteria_list:
+        test_count = 0
         number_true = 0
         if criteria == 0:
             print("現在の設定：Criteria.NONE")
@@ -184,6 +315,7 @@ def main(lang):
         for categorys in test_data_list.values():
             for comments in categorys.values():
                 for comment in comments:
+                    test_count += 1
                     mitigation_comment = ai.suggest(comment, criteria=criteria)
                     print("緩和前コメント：", comment)
                     judgement, ng_reasons = ai.check(mitigation_comment)
@@ -191,7 +323,9 @@ def main(lang):
                         number_true += 1
                     analyst.register(comment, judgement, ng_reasons, mitigation_comment)
 
-        print("緩和表現成功回数：", number_true)
+        print(f"緩和表現成功回数：{number_true}/{test_count}")
+        analyst.print_result()
+
 
 if __name__ == '__main__':
     main()

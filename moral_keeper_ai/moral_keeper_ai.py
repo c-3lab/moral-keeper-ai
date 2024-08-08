@@ -30,9 +30,11 @@ class CheckAI:
         _system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
+        requests = []
         requests = [
             {
                 'model': 'gpt-4o',
+                # 'model': 'gpt-4o-mini',
                 'message': [
                     {"role": "system", "content": _system_prompt},
                     {"role": "user", "content": content},
@@ -40,20 +42,21 @@ class CheckAI:
             }
         ]
 
-        if criteria == Criteria.ALL:
-            _criteria_dict = {prompt: True for prompt in ExtraCriteria.ALL.to_prompts()}
-            _system_prompt = self.system_template.format(
-                criteria_prompt=json.dumps(_criteria_dict, indent=2)
-            )
-            requests += [
-                {
-                    'model': 'gpt-35-turbo',
-                    'message': [
-                        {"role": "system", "content": _system_prompt},
-                        {"role": "user", "content": content},
-                    ],
-                }
-            ]
+        # if criteria == Criteria.ALL:
+        _criteria_dict = {prompt: True for prompt in ExtraCriteria.ALL.to_prompts()}
+        _system_prompt = self.system_template.format(
+            criteria_prompt=json.dumps(_criteria_dict, indent=2)
+        )
+        requests += [
+            {
+                'model': 'gpt-35-turbo',
+                # 'model': 'gpt-4o-mini',
+                'message': [
+                    {"role": "system", "content": _system_prompt},
+                    {"role": "user", "content": content},
+                ],
+            }
+        ]
 
         responses = self.llm.chat(requests, json_mode=True)
 
