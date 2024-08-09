@@ -95,24 +95,26 @@ class SuggestAI:
             '```\n'
         )
 
-        self.system_template_with_checkpoints = PromptTemplate.from_template(
-            'You are a professional content moderator.\n'
+        self.system_template_with_checkpoints = (
+            '# Prerequisite\n'
+            'You are a professional screenwriter.\n'
+            'The text you have received is a comment on open data on a website '
+            'published by a local government.\n'
+            'The received text is an inappropriate comment that should not be made '
+            'available to the public, so please perform the following task.\n\n'
             '# Task Description\n'
-            '- If the received text contains anti-comments, baseless accusations, '
-            'extreme expressions, or does not meet the #checkpoints, '
-            'perform the following tasks.\n'
-            '- Alleviate the expressions in the received text, '
-            'creating a revised version that removes offensive, defamatory, '
-            'or excessively extreme expressions, '
-            'and ensures compliance with the #checkpoints.\n'
-            '- Adjust the text to appropriate expressions while retaining the '
-            'original intent of the comment.\n\n'
-            'The purpose of this task is to maintain a healthy communication '
-            'environment on the site while maximizing respect for the intent of the '
-            'comments.\n\n'
-            '# checkpoints\n'
-            '{checkpoints}\n\n'
-            '# output\n'
+            'Consider the following in English and write in Japanese.\n'
+            'Analyze the emotional tone of the comment and revise expressions such '
+            'as attacks, sarcasm, sarcasm, and accusations to expressions that can '
+            'be made available to the public, even if the purpose of the comment is changed.\n'
+            'Add specific remarks to opinions and one-sided expressions of opinion, '
+            'and revise comments to be constructive.\n'
+            'If personal information is included, we will comply with privacy laws and '
+            'mask personal information in the comments.\n'
+            'The results of the above tasks will be output according to the # output below.\n\n'
+            'The purpose of this task is to maintain a healthy communication environment on '
+            'the site while respecting the intent of the comments to the fullest extent possible.\n\n'
+            '# Output\n'
             '```JSON\n'
             '{{\n'
             '    "revised_and_moderated_comments": ""\n'
@@ -130,8 +132,11 @@ class SuggestAI:
             system_prompt = self.system_template_with_checkpoints.format(
                 checkpoints=json.dumps(checkpoints, indent=2)
             )
-        messages = [{"role": "system", "content": system_prompt}] + [
-            {"role": "user", "content": content}
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。"},
+            {"role": "assistant", "content": "公開されているデータでは必要な情報が不足していると感じています。具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。"},
+            {"role": "user", "content": content},
         ]
 
         for _ in range(3):
@@ -140,7 +145,7 @@ class SuggestAI:
                 json_mode=True,
             )
             for ans in response:
-                if ret := ans.get('revised_and_moderated_comments', False):
+                if ret := ans.get("revised_and_moderated_comments", False):
                     return ret
         return None
 
