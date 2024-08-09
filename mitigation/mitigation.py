@@ -99,11 +99,11 @@ class ai_check_analysis:
         )
         print(f"正解率:{accuracy *100} %")
 
-        precision = (true_negative) / (false_positive + true_negative)
-        print(f"適合率:{precision*100} % (false 適合率)")
+        precision = (true_positive) / (true_positive + false_positive)
+        print(f"適合率:{precision*100} %")
 
-        recall = (true_negative) / (false_negative + true_negative)
-        print(f"再現率:{recall*100} % (false 再現率)")
+        recall = (true_positive) / (true_positive + false_negative)
+        print(f"再現率:{recall*100} %")
 
         f1_score = 2 * (precision * recall) / (precision + recall)
         print(f"調和平均:{f1_score*100} %")
