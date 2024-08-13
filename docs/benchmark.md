@@ -1,6 +1,10 @@
-# 検証用プログラム
+# ベンチマーク検証用プログラム
 
-moral-keeper-ai の利用の際にプロンプトの性能を測るためテストコメントを用いたF1スコアの出力をするプログラム
+moral-keeper-ai の利用の際にプロンプトの性能を測るためテストコメントを用いたスコアを出力するプログラム
+
+## 対象プログラム
+
+benchmarkディレクトリ配下のevaluateおよびmitigation
 
 ## 設定
 
@@ -15,7 +19,7 @@ moral-keeper-ai の利用の際にプロンプトの性能を測るためテス�
 ### 前提
 
 - python仮装環境にて実行
-- pip installが実行可能であること
+- poetryが実行可能であること
 - moral_keeper_aiがインストール済みであること
 
 ### 仮装環境の有効化
@@ -27,14 +31,21 @@ source .venv/bin/activate
 ### 前提モジュールのインストール
 
 ```sh
-pip install click prettytable
+poetry install
 ```
 
 ### 検証用プログラムの実行
 
+#### check関数を検証する場合
 ```sh
-cd moral-keeper-ai/evaluate
+cd moral-keeper-ai/benchmark/evaluate
 python evaluate.py ja
+```
+
+#### suggest関数を検証する場合
+```sh
+cd moral-keeper-ai/benchmark/mitigation
+python mitigation.py ja
 ```
 
 
