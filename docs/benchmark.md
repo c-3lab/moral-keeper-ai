@@ -1,52 +1,49 @@
-# ベンチマーク検証用プログラム
+# Benchmark verification program
 
-moral-keeper-ai の利用の際にプロンプトの性能を測るためテストコメントを用いたスコアを出力するプログラム
+A program that outputs a score using test comments to measure the performance of prompts when using moral-keeper-ai
 
-## 対象プログラム
+## Target program
 
-benchmarkディレクトリ配下のevaluateおよびmitigation
+evaluate and mitigation under the benchmark directory
 
-## 設定
+## Settings
 
-.envまたは環境変数で各種設定を追加( moral-keeper-aiのREADME([環境変数および設定方法](../README.md))参照)
+Add various settings in .env or environment variables (see moral-keeper-ai README ([Environment variables and settings](../README.md)))
 
-## テストコメント
-./data配下に配置することで検証用プログラムでテストコメントを読み込むことが可能。  
-テストコメント内で観点項目を記載し、どこコメントがどの観点に抵触するかを分類する。
+## Test comments
+By placing them under ./data, the verification program can read test comments.
+In the test comments, you can write viewpoints and classify which comments conflict with which viewpoints.
 
-## 実行方法
+## How to run
 
-### 前提
+### Prerequisites
 
-- python仮装環境にて実行
-- poetryが実行可能であること
-- moral_keeper_aiがインストール済みであること
+- Run in a python virtual environment
+- poetry must be executable
+- moral_keeper_ai must be installed
 
-### 仮装環境の有効化
+### Activate virtual environment
 
 ```sh
 source .venv/bin/activate
 ```
 
-### 前提モジュールのインストール
+### Install prerequisite modules
 
 ```sh
 poetry install
 ```
 
-### 検証用プログラムの実行
+### Run verification program
 
-#### check関数を検証する場合
+#### When verifying check function
 ```sh
 cd moral-keeper-ai/benchmark/evaluate
 python evaluate.py ja
 ```
 
-#### suggest関数を検証する場合
+#### When verifying suggest function
 ```sh
 cd moral-keeper-ai/benchmark/mitigation
 python mitigation.py ja
 ```
-
-
-

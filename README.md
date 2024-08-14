@@ -1,102 +1,102 @@
+
 # moral-keeper-ai
 
-moral-keeper-ai は、入力されたテキストを以下の視点でAIが判定し、テキストの修正案を出力するPython製オープンソースプログラムです。
-- ユーザーが投稿するテキストが読み手にとって不快になる
-- 投稿者の炎上のきっかけにならない
-- 曖昧な意見投稿による運営者のカスタマー業務の工数の肥大を抑止する
+moral-keeper-ai is an open-source Python program that uses AI to evaluate input text from the following perspectives and output suggestions for text revision:
+- Preventing the user's posted text from being offensive to the reader
+- Avoiding potential public backlash against the poster
+- Suppressing the increase in customer service workload due to ambiguous opinion posts
 
-これによりポジティブで尊敬のあるオンラインプレゼンスを維持するお手伝いをします。
+This helps maintain a positive and respectful online presence.
 
-## 使用技術
+## Technology Used
 
 - OpenAI API
 
-## 対応APIサーバー
+## Supported API Servers
 
-- Azure OpanAI Service
+- Azure OpenAI Service
 
-## 推奨モデル
+## Recommended Models
 
 - GPT-4o mini
 - GPT-4o
 - GPT-3turbo
 
-## Main features
+## Main Features
 
-- ある文章が投稿内容として適切かどうか判定する
-- 問題のある投稿内容に対してより適切な表現の文章を提案する
-- Pythonからのメソッド呼び出しが可能
-- APIサーバーとしてhttp経由で使用可能
+- Determine if a given sentence is appropriate for posting
+- Suggest more appropriate expressions for problematic posts
+- Can be called from Python methods
+- Usable as an API server via HTTP
 
 ## Quick Start
 
-1. インストール
+1. Installation
 
 ```sh
 pip install moral-keeper-ai
 ```
 
-2. 設定
+2. Configuration
 
-.envまたは環境変数で各種設定を追加( [環境変数および設定方法](#環境変数および設定方法)参照)
+Add various settings in .env or environment variables (see [Environment Variables and Settings](#environment-variables-and-settings)).
 
-3. 使用例
+
+3. Example Usage
 
 ```python
 import moral_keeper_ai
-judgment, details = moral_keeper_ai.check('チェックしたい文章')
-suggested_message = moral_keeper_ai.suggest('投稿内容として適切にしたい文章')
+judgment, details = moral_keeper_ai.check('The sentence you want to check')
+suggested_message = moral_keeper_ai.suggest('The sentence you want to make appropriate for posting')
 ```
 
 ### moral_keeper_ai.check()
 
-戻り値：タプル
+Return value: Tuple
 
-- judgment: bool ：True(問題無い)、False(問題あり)
-- details: list：問題があった場合にどの項目で問題ありと判定されたかのリスト
+- judgment: bool: True (No problem), False (Problematic)
+- details: list: A list of items that were flagged as problematic if any issues were found
 
-概要
-受け取った文章を企業の広報担当者が検閲するプロンプト。
-内部設定された項目で検閲し、全ての項目をクリアしない場合は望ましくない文章であると判断する。
+Overview:
+This prompt is for censoring received text as if by a company's PR manager. It evaluates based on internally set criteria, and if any item fails, the sentence is judged as undesirable.
 
 ### moral_keeper_ai.suggest()
 
-戻り値：文字列
-概要
-受け取った文章の表現緩和を行うプロンプト。
-表現緩和後の文字列を返す。
+Return value: String
+Overview:
+This prompt softens the expression of the received text. It returns the softened string.
 
-## 環境変数および設定方法
+## Environment Variables and Settings
 
-### APIキー
-
-```bash
-export AZURE_OPENAI_KEY='APIキー'
-```
-
-### エンドポイント
+### API Key
 
 ```bash
-export AZURE_ENDPOINT='エンドポイントURL'
+export AZURE_OPENAI_KEY='API Key'
 ```
 
-### 使用モデル
+### Endpoint
 
 ```bash
-export LLM_MODEL='モデル名/デプロイ名'
+export AZURE_ENDPOINT='Endpoint URL'
 ```
 
-## ディレクトリ構成
+### Model to Use
+
+```bash
+export LLM_MODEL='Model name/Deployment name'
+```
+
+## Directory Structure
 <pre>
-.  
-├── moral_keeper_ai：モジュール本体
-├── tests：pytest資材
-├── docs：ドキュメント
-└── benchmark：ベンチマーク検証用プログラム
-  └──evaluate：check関数用
-    └──data：テストコメントファイル
-  └──mitigation：suggest関数用
-    └──data：テストコメントファイル
+.
+├── moral_keeper_ai: Main module
+├── tests: pytest resources
+├── docs: Documentation
+└── benchmark: Program for benchmark verification
+  └── evaluate: check function
+    └── data: Test comment files
+  └── mitigation: suggest function
+    └── data: Test comment files
 </pre>
 
 ## LICENSE
