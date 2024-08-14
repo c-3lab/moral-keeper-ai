@@ -70,7 +70,7 @@ class SuggestAI:
     def __init__(self, api_config):
         self.model = api_config['model']
         _args = {
-            'repeat': api_config['repeat'],
+            'repeat': 1,
             'timeout': api_config['timeout'],
             'max_retries': api_config['max_retries'],
             'api_key': api_config['api_key'],
@@ -105,21 +105,13 @@ class SuggestAI:
             '# Output\n'
             '```JSON\n'
             '{\n'
+            '    "Points to Note When Converting This Comment": "",\n'
             '    "revised_and_moderated_comments": ""\n'
             '}\n'
             '```\n'
         )
 
     def suggest(self, content):
-        # checkpoints = criteria.to_prompts()
-        # if perspectives:
-        #     checkpoints.extend(perspectives)
-        # if len(checkpoints) == 0:
-        #     system_prompt = self.system_template_without_checkpoints
-        # else:
-        #     system_prompt = self.system_template_with_checkpoints.format(
-        #         checkpoints=json.dumps(checkpoints, indent=2)
-        #     )
         messages = [
             {"role": "system", "content": self.system_prompt},
             {
@@ -157,9 +149,9 @@ class MoralKeeperAI:
             'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),
             'api_key': os.getenv("AZURE_OPENAI_KEY"),
             'model': os.getenv("DEPLOY_NAME"),
-            'repeat': repeat,
             'timeout': timeout,
             'max_retries': max_retries,
+            'repeat': repeat,
         }
         self.check_ai = CheckAI(base_model, self.api_config)
         self.suggest_ai = SuggestAI(self.api_config)

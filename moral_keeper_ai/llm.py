@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 from enum import IntFlag, auto
 
 from openai import (
@@ -13,12 +12,12 @@ from openai import (
 
 
 class LLM:
-    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
-        self.model = model or os.getenv("LLM_MODEL")
+    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat):
+        self.model = model
         self.client = AzureOpenAI(
-            api_key=api_key or os.getenv("AZURE_OPENAI_KEY"),
+            azure_endpoint=azure_endpoint,
+            api_key=api_key,
             api_version="2023-05-15",
-            azure_endpoint=azure_endpoint or os.getenv("AZURE_ENDPOINT"),
             timeout=timeout,
             max_retries=max_retries,
         )
@@ -78,12 +77,12 @@ class LLM:
 
 
 class AsyncLLM:
-    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
+    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat):
         self.model = model
         self.client = AsyncAzureOpenAI(
             azure_endpoint=azure_endpoint,
-            api_version="2023-05-15",
             api_key=api_key,
+            api_version="2023-05-15",
             timeout=timeout,
             max_retries=max_retries,
         )

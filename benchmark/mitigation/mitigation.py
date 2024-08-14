@@ -19,7 +19,7 @@ def get_test_comments(lang):
         print(f"Directory does not exist: {lang}")
         return
     # ディレクトリ内の特定のファイルを指定
-    file_path = os.path.join(mitigation_path, 'comments.txt')
+    file_path = os.path.join(mitigation_path, 'comment2.txt')
     # ファイルが存在するか確認
     if not os.path.isfile(file_path):
         print(f"File not found: {file_path}")
@@ -234,8 +234,8 @@ class ai_check_analysis:
 def main(lang):
     test_data_list = get_test_comments(lang)
     # スクリプトのエントリーポイント
-    base_model = Models.GPT35_turbo
-    ai = MoralKeeperAI(base_model=base_model, repeat=1, timeout=120, max_retries=10)
+    base_model = Models.GPT4o_mini
+    ai = MoralKeeperAI(base_model=base_model, repeat=3, timeout=120, max_retries=10)
     analyst = ai_check_analysis(lang, base_model)
     test_count = 0
     number_true = 0
@@ -248,6 +248,9 @@ def main(lang):
                 judgement, ng_reasons = ai.check(mitigation_comment)
                 if judgement:
                     number_true += 1
+                elif 'OpenAI Filter' in ng_reasons:
+                    test_count -= 1
+
                 analyst.register(comment, judgement, ng_reasons, mitigation_comment)
 
     print(f"緩和表現成功回数：{number_true}/{test_count}")

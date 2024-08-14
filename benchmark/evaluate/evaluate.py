@@ -19,7 +19,7 @@ def get_test_comments(lang):
         print(f"Directory does not exist: {lang}")
         return
     # ディレクトリ内の特定のファイルを指定
-    file_path = os.path.join(evaluate_path, 'comment2.txt')
+    file_path = os.path.join(evaluate_path, 'comments_hot.txt')
     # ファイルが存在するか確認
     if not os.path.isfile(file_path):
         print(f"File not found: {file_path}")
