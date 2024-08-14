@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from enum import IntFlag, auto
 
 from openai import (
     AsyncAzureOpenAI,
@@ -78,11 +79,11 @@ class LLM:
 
 class AsyncLLM:
     def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
-        self.model = model or os.getenv("LLM_MODEL")
+        self.model = model
         self.client = AsyncAzureOpenAI(
-            api_key=api_key or os.getenv("AZURE_OPENAI_KEY"),
+            azure_endpoint=azure_endpoint,
             api_version="2023-05-15",
-            azure_endpoint=azure_endpoint or os.getenv("AZURE_ENDPOINT"),
+            api_key=api_key,
             timeout=timeout,
             max_retries=max_retries,
         )
@@ -114,7 +115,8 @@ class AsyncLLM:
                         else:
                             ans.append(json.loads(choice.message.content))
                 return ans
-            except BadRequestError:
+            except BadRequestError as e:
+                print(e)
                 if not json_mode:
                     ans = None
                 else:
@@ -145,3 +147,9 @@ class AsyncLLM:
             except json.decoder.JSONDecodeError:
                 continue
             return ans
+
+
+class Models(IntFlag):
+    GPT35_turbo = auto()
+    GPT4o = auto()
+    GPT4o_mini = auto()

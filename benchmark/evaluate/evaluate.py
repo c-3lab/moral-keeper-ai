@@ -6,9 +6,9 @@ import click
 from dotenv import load_dotenv
 from prettytable import PrettyTable
 
-from moral_keeper_ai import Criteria, MoralKeeperAI
+from moral_keeper_ai import Criteria, Models, MoralKeeperAI
 
-dotenv_path = join(dirname(__file__), '../.env.local')
+dotenv_path = join(dirname(__file__), '../../.env.local')
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
 
 
@@ -33,8 +33,15 @@ def get_test_comments(lang):
 
 
 class ai_check_analysis:
-    def __init__(self, lang):
+    def __init__(self, lang, base_model):
         self.test_comments = get_test_comments(lang)
+        if base_model == Models.GPT4o:
+            self.criateria = Criteria.GPT4o.criateria
+        if base_model == Models.GPT4o_mini:
+            self.criateria = Criteria.GPT4o_mini.criateria
+        if base_model == Models.GPT35_turbo:
+            self.criateria = Criteria.GPT35_turbo.criateria
+
         self.comment_num = 0
 
         # 結果集計表
@@ -48,7 +55,7 @@ class ai_check_analysis:
         # 集計用中間テーブル
         self.summary_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
-            + Criteria.to_prompts(Criteria.ALL)
+            + self.criateria
             + ['OpenAI Filter', 'Others', 'Error']
         )
         self.summary_table = []
@@ -172,90 +179,17 @@ class ai_check_analysis:
         #     summary_table.add_row(row.values())
         # print(summary_table, end="\n\n")
 
-        print(
-            "--------各プロンプトカテゴリが、どのコメントカテゴリでNGを出したか---------"
-        )
-        # 表の主キーリストとカラム名リストを作る
-        _category_analysis_table = {}
-        category_analysis_table_header = [
-            'AI \\ comment'
-        ] + self._get_comment_categorys()
-        reason_categorys = (
-            ['OK']
-            + [Criteria.to_str(criteria) for criteria in Criteria.MAPPINGS.keys()]
-            + ['OpenAI Filter', 'Error', 'Others']
-        )
-        # 表の初期化
-        for reason_category in reason_categorys:
-            row = {}
-            row.setdefault('AI \\ comment', reason_category)
-            for col_name in category_analysis_table_header:
-                row.setdefault(col_name, 0)
-            _category_analysis_table[reason_category] = row
-
-        # 値を登録する。
-        for summary_row in self.summary_table:
-            # 集計表の行から、理由を走査する。
-            hit_categorys = set([])
-            if summary_row['OK']:
-                _category_analysis_table['OK'][summary_row['comment_category']] += 1
-            else:
-                # check NG
-                for reason in Criteria.to_prompts(Criteria.ALL) + ['OpenAI Filter']:
-                    if summary_row[reason]:
-                        # NG理由がヒットしていた場合
-                        if reason == 'OpenAI Filter':
-                            reason_category = 'OpenAI Filter'
-                            hit_categorys.add(reason_category)
-                        elif reason == 'Error':
-                            reason_category = 'Error'
-                            hit_categorys.add(reason_category)
-                        else:
-                            hit_categorys.add(
-                                *[
-                                    Criteria.to_str(criteria)
-                                    for criteria in Criteria.MAPPINGS.keys()
-                                    if criteria & Criteria.from_prompt(reason)
-                                ]
-                            )
-                for hited_category in list(hit_categorys):
-                    _category_analysis_table[hited_category][
-                        summary_row['comment_category']
-                    ] += 1
-
-                if others := summary_row['Others']:
-                    _category_analysis_table['Others'][
-                        summary_row['comment_category']
-                    ] += others
-
-        # テーブル作成、表示
-        category_analysis_table = PrettyTable(
-            field_names=category_analysis_table_header
-        )
-        for row in _category_analysis_table.values():
-            # 件数をパーセンテージに変換
-            for col_name, value in row.items():
-                if comment_count := self.comment_count.get(col_name):
-                    row[col_name] = round((value / comment_count) * 100, 1)
-            category_analysis_table.add_row(row.values())
-        print(category_analysis_table, end="\n\n")
-
         print("--------各チェック項目が、どのカテゴリのコメントでNGを出したか---------")
         _checkpoint_analysis_table = {}
         checkpoint_analysis_table_header = [
             'prompt',
-            'category',
         ] + self._get_comment_categorys()
-        checkpoints = Criteria.to_prompts(Criteria.ALL) + ['Others']
+        checkpoints = self.criateria + ['Others']
 
         # 表の初期化
         for checkpoint in checkpoints:
             row = {}
             row.setdefault('prompt', checkpoint)
-            for category in Criteria.from_prompt(checkpoint):
-                if checkpoint == 'Others':
-                    category = Criteria.OTHERS
-                row.setdefault('category', *[Criteria.to_str(category)])
             for col_name in checkpoint_analysis_table_header:
                 row.setdefault(col_name, 0)
             _checkpoint_analysis_table[checkpoint] = row
@@ -267,7 +201,7 @@ class ai_check_analysis:
                 pass
             else:
                 # check NG
-                for reason in Criteria.to_prompts(Criteria.ALL):
+                for reason in self.criateria:
                     if summary_row[reason]:
                         _checkpoint_analysis_table[reason][
                             summary_row['comment_category']
@@ -298,10 +232,10 @@ class ai_check_analysis:
 @click.argument('lang')
 def main(lang):
     test_data_list = get_test_comments(lang)
+    base_model = Models.GPT4o_mini
 
-    # スクリプトのエントリーポイント
-    ai = MoralKeeperAI(repeat=3, timeout=120, max_retries=10)
-    analyst = ai_check_analysis(lang)
+    ai = MoralKeeperAI(base_model=base_model, repeat=1, timeout=120, max_retries=10)
+    analyst = ai_check_analysis(lang, base_model)
 
     for categorys in test_data_list.values():
         for comments in categorys.values():

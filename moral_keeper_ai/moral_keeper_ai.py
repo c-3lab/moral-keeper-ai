@@ -1,17 +1,32 @@
 import json
+import os
 
 from langchain_core.prompts import PromptTemplate
 
-from moral_keeper_ai.criateria import Criteria, ExtraCriteria
+from moral_keeper_ai.criateria import Criteria
 
-from .llm import LLM, AsyncLLM
+from .llm import LLM, AsyncLLM, Models
 
 
 class CheckAI:
-    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
-        self.llm = AsyncLLM(
-            repeat, timeout, max_retries, api_key, azure_endpoint, model
-        )
+    def __init__(self, base_model, api_config):
+        self.model = api_config['model']
+        _args = {
+            'azure_endpoint': api_config['azure_endpoint'],
+            'api_key': api_config['api_key'],
+            'model': api_config['model'],
+            'repeat': api_config['repeat'],
+            'timeout': api_config['timeout'],
+            'max_retries': api_config['max_retries'],
+        }
+        self.llm = AsyncLLM(**_args)
+
+        if base_model == Models.GPT4o:
+            self.criateria = Criteria.GPT4o.criateria
+        if base_model == Models.GPT4o_mini:
+            self.criateria = Criteria.GPT4o_mini.criateria
+        if base_model == Models.GPT35_turbo:
+            self.criateria = Criteria.GPT35_turbo.criateria
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
@@ -23,34 +38,15 @@ class CheckAI:
             '```\n'
         )
 
-    def check(self, content, criteria, perspectives):
-        _criteria_dict = {criterion: True for criterion in criteria.to_prompts()}
-        if perspectives:
-            _criteria_dict.update({perspective: True for perspective in perspectives})
-        _system_prompt = self.system_template.format(
-            criteria_prompt=json.dumps(_criteria_dict, indent=2)
-        )
+    def check(self, content):
         requests = []
-        requests = [
-            {
-                'model': 'gpt-4o',
-                # 'model': 'gpt-4o-mini',
-                'message': [
-                    {"role": "system", "content": _system_prompt},
-                    {"role": "user", "content": content},
-                ],
-            }
-        ]
-
-        # if criteria == Criteria.ALL:
-        _criteria_dict = {prompt: True for prompt in ExtraCriteria.ALL.to_prompts()}
+        _criteria_dict = {criterion: True for criterion in self.criateria}
         _system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(_criteria_dict, indent=2)
         )
         requests += [
             {
-                'model': 'gpt-35-turbo',
-                # 'model': 'gpt-4o-mini',
+                'model': self.model,
                 'message': [
                     {"role": "system", "content": _system_prompt},
                     {"role": "user", "content": content},
@@ -71,31 +67,20 @@ class CheckAI:
 
 
 class SuggestAI:
-    def __init__(self, repeat, timeout, max_retries, api_key, azure_endpoint, model):
-        self.llm = LLM(repeat, timeout, max_retries, api_key, azure_endpoint, model)
+    def __init__(self, api_config):
+        self.model = api_config['model']
+        _args = {
+            'repeat': api_config['repeat'],
+            'timeout': api_config['timeout'],
+            'max_retries': api_config['max_retries'],
+            'api_key': api_config['api_key'],
+            'azure_endpoint': api_config['azure_endpoint'],
+            'model': api_config['model'],
+        }
 
-        self.system_template_without_checkpoints = (
-            'You are a professional content moderator.\n'
-            '# Task Description\n'
-            '- If the received text contains anti-comments, baseless accusations, or '
-            'extreme expressions, perform the following tasks.\n'
-            '- Alleviate the expressions in the received text, creating a revised '
-            'version that removes offensive, defamatory, or excessively extreme '
-            'expressions.\n'
-            '- Adjust the text to appropriate expressions while retaining the '
-            'original intent of the comment.\n\n'
-            'The purpose of this task is to maintain a healthy communication '
-            'environment on the site while maximizing respect for the intent of the '
-            'comments.\n\n'
-            '# output\n'
-            '```JSON\n'
-            '{\n'
-            '    "revised_and_moderated_comments": ""\n'
-            '}\n'
-            '```\n'
-        )
+        self.llm = LLM(**_args)
 
-        self.system_template_with_checkpoints = (
+        self.system_prompt = (
             '# Prerequisite\n'
             'You are a professional screenwriter.\n'
             'The text you have received is a comment on open data on a website '
@@ -106,36 +91,46 @@ class SuggestAI:
             'Consider the following in English and write in Japanese.\n'
             'Analyze the emotional tone of the comment and revise expressions such '
             'as attacks, sarcasm, sarcasm, and accusations to expressions that can '
-            'be made available to the public, even if the purpose of the comment is changed.\n'
+            'be made available to the public, even if the purpose of the comment is '
+            'changed.\n'
             'Add specific remarks to opinions and one-sided expressions of opinion, '
             'and revise comments to be constructive.\n'
-            'If personal information is included, we will comply with privacy laws and '
-            'mask personal information in the comments.\n'
-            'The results of the above tasks will be output according to the # output below.\n\n'
-            'The purpose of this task is to maintain a healthy communication environment on '
-            'the site while respecting the intent of the comments to the fullest extent possible.\n\n'
+            'If personal information is included, we will comply with privacy laws '
+            'and mask personal information in the comments.\n'
+            'The results of the above tasks will be output according to the # output '
+            'below.\n\n'
+            'The purpose of this task is to maintain a healthy communication '
+            'environment on the site while respecting the intent of the comments to '
+            'the fullest extent possible.\n\n'
             '# Output\n'
             '```JSON\n'
-            '{{\n'
+            '{\n'
             '    "revised_and_moderated_comments": ""\n'
-            '}}\n'
+            '}\n'
             '```\n'
         )
 
-    def suggest(self, content, criteria, perspectives):
-        checkpoints = criteria.to_prompts()
-        if perspectives:
-            checkpoints.extend(perspectives)
-        if len(checkpoints) == 0:
-            system_prompt = self.system_template_without_checkpoints
-        else:
-            system_prompt = self.system_template_with_checkpoints.format(
-                checkpoints=json.dumps(checkpoints, indent=2)
-            )
+    def suggest(self, content):
+        # checkpoints = criteria.to_prompts()
+        # if perspectives:
+        #     checkpoints.extend(perspectives)
+        # if len(checkpoints) == 0:
+        #     system_prompt = self.system_template_without_checkpoints
+        # else:
+        #     system_prompt = self.system_template_with_checkpoints.format(
+        #         checkpoints=json.dumps(checkpoints, indent=2)
+        #     )
         messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。"},
-            {"role": "assistant", "content": "公開されているデータでは必要な情報が不足していると感じています。具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。"},
+            {"role": "system", "content": self.system_prompt},
+            {
+                "role": "user",
+                "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。",
+            },
+            {
+                "role": "assistant",
+                "content": "公開されているデータでは必要な情報が不足していると感じています。"
+                "具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。",
+            },
             {"role": "user", "content": content},
         ]
 
@@ -153,36 +148,24 @@ class SuggestAI:
 class MoralKeeperAI:
     def __init__(
         self,
-        api_key=None,
-        azure_endpoint=None,
-        model=None,
+        base_model: Models,
         repeat=1,
         timeout=60,
         max_retries=3,
     ):
-        self.check_ai = CheckAI(
-            repeat=repeat,
-            timeout=timeout,
-            max_retries=max_retries,
-            api_key=api_key,
-            azure_endpoint=azure_endpoint,
-            model=model,
-        )
-        self.suggest_ai = SuggestAI(
-            repeat=repeat,
-            timeout=timeout,
-            max_retries=max_retries,
-            api_key=api_key,
-            azure_endpoint=azure_endpoint,
-            model=model,
-        )
+        self.api_config = {
+            'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),
+            'api_key': os.getenv("AZURE_OPENAI_KEY"),
+            'model': os.getenv("DEPLOY_NAME"),
+            'repeat': repeat,
+            'timeout': timeout,
+            'max_retries': max_retries,
+        }
+        self.check_ai = CheckAI(base_model, self.api_config)
+        self.suggest_ai = SuggestAI(self.api_config)
 
-    def check(self, content, criteria=Criteria.ALL, perspectives=[]):
-        return self.check_ai.check(
-            content=content, criteria=criteria, perspectives=perspectives
-        )
+    def check(self, content):
+        return self.check_ai.check(content)
 
-    def suggest(self, content, criteria=Criteria.NONE, perspectives=[]):
-        return self.suggest_ai.suggest(
-            content=content, criteria=criteria, perspectives=perspectives
-        )
+    def suggest(self, content):
+        return self.suggest_ai.suggest(content)
