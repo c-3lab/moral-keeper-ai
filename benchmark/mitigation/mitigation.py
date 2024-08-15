@@ -230,7 +230,7 @@ class AiCheckAnalysis:
 def main(lang):
     test_data_list = get_test_comments(lang)
     # スクリプトのエントリーポイント
-    ai = MoralKeeperAI(timeout=120, max_retries=10)
+    ai = MoralKeeperAI(timeout=120, max_retries=10, repeat=3)
     analyst = AiCheckAnalysis(lang, ai.check_ai.criteria)
     test_count = 0
     number_true = 0

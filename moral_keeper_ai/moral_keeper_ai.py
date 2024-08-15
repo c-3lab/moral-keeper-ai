@@ -17,6 +17,7 @@ class CheckAi:
             model=api_config['model'],
             timeout=api_config['timeout'],
             max_retries=api_config['max_retries'],
+            repeat=api_config['repeat'],
         )
 
         self.base_model = self.llm.get_base_model_name()
@@ -45,7 +46,7 @@ class CheckAi:
                 {criterion: True for criterion in self.criteria}, indent=2
             )
         )
-        response = self.llm.chat(
+        responses = self.llm.chat(
             [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content},
@@ -54,8 +55,9 @@ class CheckAi:
         )
 
         details = []
-        if response is not None:
-            details.extend([k for k, v in response.items() if not v])
+        for response in responses:
+            if response is not None:
+                details.extend([k for k, v in response.items() if not v])
         details = list(dict.fromkeys(details))
         judgment = bool(0 == len(details))
         return (judgment, details)
@@ -70,6 +72,7 @@ class SuggestAi:
             model=api_config['model'],
             timeout=api_config['timeout'],
             max_retries=api_config['max_retries'],
+            repeat=1,
         )
 
         self.system_prompt = (
@@ -112,8 +115,9 @@ class SuggestAi:
             messages,
             json_mode=True,
         )
-        if ret := response.get("revised_and_moderated_comments", False):
-            return ret
+        for ans in response:
+            if ret := ans.get("revised_and_moderated_comments", False):
+                return ret
         return None
 
 
@@ -122,6 +126,7 @@ class MoralKeeperAI:
         self,
         timeout=60,
         max_retries=3,
+        repeat=1,
     ):
         self.api_config = {
             'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),
@@ -129,6 +134,7 @@ class MoralKeeperAI:
             'model': os.getenv("DEPLOY_NAME"),
             'timeout': timeout,
             'max_retries': max_retries,
+            'repeat': repeat,
         }
 
         self.check_ai = CheckAi(self.api_config)

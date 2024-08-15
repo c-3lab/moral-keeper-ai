@@ -4,7 +4,7 @@ from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimi
 
 
 class Llm:
-    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries):
+    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat):
         self.model = model
         self.client = AzureOpenAI(
             azure_endpoint=azure_endpoint,
@@ -13,6 +13,7 @@ class Llm:
             timeout=timeout,
             max_retries=max_retries,
         )
+        self.repeat = repeat
 
     def get_base_model_name(self):
         return self.client.chat.completions.create(
@@ -23,43 +24,49 @@ class Llm:
         args = {
             'model': self.model,
             'messages': messages,
+            'n': self.repeat,
         }
         if json_mode:
             args['response_format'] = {"type": "json_object"}
 
         for error_retry in range(3):
             try:
-                ai_response = (
-                    self.client.chat.completions.create(**args)
-                    .choices[0]
-                    .message.content
-                )
+                ai_responses = [
+                    ret.message.content
+                    for ret in self.client.chat.completions.create(**args).choices
+                ]
                 if not json_mode:
-                    ret = ai_response
+                    ret = ai_responses
                 else:
-                    ret = json.loads(ai_response)
+                    ret = [json.loads(response) for response in ai_responses]
             except BadRequestError:
                 if not json_mode:
                     ret = None
                 else:
-                    ret = {
-                        "OpenAI Filter": False,
-                    }
+                    ret = [
+                        {
+                            "OpenAI Filter": False,
+                        }
+                    ]
             except RateLimitError:
                 if not json_mode:
                     ret = None
                 else:
-                    ret = {
-                        "RateLimitError": False,
-                    }
+                    ret = [
+                        {
+                            "RateLimitError": False,
+                        }
+                    ]
             except PermissionDeniedError as e:
                 print(e)
                 if not json_mode:
                     ret = None
                 else:
-                    ret = {
-                        "APIConnectionError": False,
-                    }
+                    ret = [
+                        {
+                            "APIConnectionError": False,
+                        }
+                    ]
             except json.decoder.JSONDecodeError:
                 continue
 

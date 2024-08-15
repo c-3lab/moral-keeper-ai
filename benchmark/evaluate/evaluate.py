@@ -227,7 +227,7 @@ class AiCheckAnalysis:
 @click.argument('lang')
 def main(lang):
     test_data_list = get_test_comments(lang)
-    ai = MoralKeeperAI(timeout=120, max_retries=10)
+    ai = MoralKeeperAI(timeout=120, max_retries=10, repeat=3)
     analyst = AiCheckAnalysis(lang, ai.check_ai.criteria)
 
     for categorys in test_data_list.values():
