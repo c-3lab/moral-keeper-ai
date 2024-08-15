@@ -1,6 +1,6 @@
 import json
 
-from openai import AzureOpenAI
+from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimitError
 
 
 class Llm:
@@ -20,12 +20,40 @@ class Llm:
         if json_mode:
             args['response_format'] = {"type": "json_object"}
 
-        ai_response = (
-            self.client.chat.completions.create(**args).choices[0].message.content
-        )
-        if not json_mode:
-            ret = ai_response
-        else:
-            ret = json.loads(ai_response)
+        for error_retry in range(3):
+            try:
+                ai_response = (
+                    self.client.chat.completions.create(**args)
+                    .choices[0]
+                    .message.content
+                )
+                if not json_mode:
+                    ret = ai_response
+                else:
+                    ret = json.loads(ai_response)
+            except BadRequestError:
+                if not json_mode:
+                    ret = None
+                else:
+                    ret = {
+                        "OpenAI Filter": False,
+                    }
+            except RateLimitError:
+                if not json_mode:
+                    ret = None
+                else:
+                    ret = {
+                        "RateLimitError": False,
+                    }
+            except PermissionDeniedError as e:
+                print(e)
+                if not json_mode:
+                    ret = None
+                else:
+                    ret = {
+                        "APIConnectionError": False,
+                    }
+            except json.decoder.JSONDecodeError:
+                continue
 
-        return ret
+            return ret

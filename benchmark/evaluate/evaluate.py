@@ -51,7 +51,7 @@ class AiCheckAnalysis:
         self.summary_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
             + self.criteria
-            + ['Others', 'Error']
+            + ['OpenAI Filter', 'Others', 'Error']
         )
         self.summary_table = []
 

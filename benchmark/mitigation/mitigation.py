@@ -51,7 +51,7 @@ class AiCheckAnalysis:
         self.summary_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
             + self.criteria
-            + ['Others', 'Error']
+            + ['OpenAI Filter', 'Others', 'Error']
         )
         self.summary_table = []
 
@@ -243,6 +243,8 @@ def main(lang):
                 judgement, ng_reasons = ai.check(mitigation_comment)
                 if judgement:
                     number_true += 1
+                elif 'OpenAI Filter' in ng_reasons:
+                    test_count -= 1
 
                 analyst.register(comment, judgement, ng_reasons, mitigation_comment)
 
