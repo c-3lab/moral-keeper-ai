@@ -1,5 +1,8 @@
 import argparse
+import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from moral_keeper_ai import MoralKeeperAI
 
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -8,8 +11,44 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        self.send_response(404)
-        self.end_headers()
+        if self.path == '/check':
+            received_data = {}
+            try:
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+                received_data = json.loads(post_data)
+                if (content := received_data.get("content", None)) is None:
+                    self.send_response(400)
+                    self.end_headers()
+                    return
+            except json.decoder.JSONDecodeError:
+                self.send_response(400)
+                self.end_headers()
+                return
+            except Exception as e:
+                print(e)
+                self.send_response(500)
+                self.end_headers()
+                return
+            try:
+                ai = MoralKeeperAI()
+                judgement, ng_reasons = ai.check(content)
+                response = {
+                    'judgement': judgement,
+                    'ng_reasons': ng_reasons,
+                    'status': 'success',
+                }
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+            except Exception as e:
+                print(e)
+                self.send_response(500)
+                self.end_headers()
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 
 def main():
