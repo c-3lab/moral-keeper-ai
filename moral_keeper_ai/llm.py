@@ -1,10 +1,9 @@
 import json
-from enum import IntFlag, auto
 
 from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimitError
 
 
-class LLM:
+class Llm:
     def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat):
         self.model = model
         self.client = AzureOpenAI(
@@ -15,6 +14,11 @@ class LLM:
             max_retries=max_retries,
         )
         self.repeat = repeat
+
+    def get_base_model_name(self):
+        return self.client.chat.completions.create(
+            model=self.model, messages=[{'role': 'system', 'content': ''}], max_tokens=1
+        ).model
 
     def chat(self, messages: list, json_mode=False) -> list:
         args = {
@@ -67,9 +71,3 @@ class LLM:
                 continue
 
             return ret
-
-
-class Models(IntFlag):
-    GPT35_turbo = auto()
-    GPT4o = auto()
-    GPT4o_mini = auto()

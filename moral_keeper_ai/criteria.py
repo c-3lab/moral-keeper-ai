@@ -1,6 +1,6 @@
 class Criteria:
-    class GPT35_turbo:
-        criateria = [
+    class Gpt35Turbo:
+        criteria = [
             "Compliance with company policies",
             "Use appropriate expressions for public communication",
             "The comment contains no personal information",
@@ -13,8 +13,8 @@ class Criteria:
             "The feedback is not negative",
         ]
 
-    class GPT4o:
-        criateria = [
+    class Gpt4o:
+        criteria = [
             "No personal attacks",
             "No discrimination",
             "No threats or violence",
@@ -34,8 +34,8 @@ class Criteria:
             "Adherence to company policies",
         ]
 
-    class GPT4o_mini:
-        criateria = [
+    class Gpt4oMini:
+        criteria = [
             "No personal attacks",
             "No discrimination",
             "No threats or violence",

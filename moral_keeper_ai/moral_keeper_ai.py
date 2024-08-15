@@ -3,15 +3,15 @@ import os
 
 from langchain_core.prompts import PromptTemplate
 
-from moral_keeper_ai.criateria import Criteria
+from moral_keeper_ai.criteria import Criteria
 
-from .llm import LLM, Models
+from .llm import Llm
 
 
-class CheckAI:
-    def __init__(self, base_model, api_config):
+class CheckAi:
+    def __init__(self, api_config):
         self.model = api_config['model']
-        self.llm = LLM(
+        self.llm = Llm(
             azure_endpoint=api_config['azure_endpoint'],
             api_key=api_config['api_key'],
             model=api_config['model'],
@@ -20,12 +20,15 @@ class CheckAI:
             repeat=api_config['repeat'],
         )
 
-        if base_model == Models.GPT4o:
-            self.criateria = Criteria.GPT4o.criateria
-        if base_model == Models.GPT4o_mini:
-            self.criateria = Criteria.GPT4o_mini.criateria
-        if base_model == Models.GPT35_turbo:
-            self.criateria = Criteria.GPT35_turbo.criateria
+        self.base_model = self.llm.get_base_model_name()
+
+        self.criteria = Criteria.Gpt4oMini.criteria
+        if 'gpt-4o' in self.base_model:
+            self.criteria = Criteria.Gpt4o.criteria
+        if 'gpt-4o-mini' in self.base_model:
+            self.criteria = Criteria.Gpt4oMini.criteria
+        if 'gpt-35-turbo' in self.base_model:
+            self.criteria = Criteria.Gpt35Turbo.criteria
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
@@ -40,7 +43,7 @@ class CheckAI:
     def check(self, content):
         system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(
-                {criterion: True for criterion in self.criateria}, indent=2
+                {criterion: True for criterion in self.criteria}, indent=2
             )
         )
         responses = self.llm.chat(
@@ -61,10 +64,10 @@ class CheckAI:
         return (judgment, details)
 
 
-class SuggestAI:
+class SuggestAi:
     def __init__(self, api_config):
         self.model = api_config['model']
-        self.llm = LLM(
+        self.llm = Llm(
             azure_endpoint=api_config['azure_endpoint'],
             api_key=api_config['api_key'],
             model=api_config['model'],
@@ -133,7 +136,6 @@ class SuggestAI:
 class MoralKeeperAI:
     def __init__(
         self,
-        base_model=Models.GPT4o_mini,
         timeout=60,
         max_retries=3,
         repeat=1,
@@ -146,8 +148,9 @@ class MoralKeeperAI:
             'max_retries': max_retries,
             'repeat': repeat,
         }
-        self.check_ai = CheckAI(base_model, self.api_config)
-        self.suggest_ai = SuggestAI(self.api_config)
+
+        self.check_ai = CheckAi(self.api_config)
+        self.suggest_ai = SuggestAi(self.api_config)
 
     def check(self, content):
         return self.check_ai.check(content)

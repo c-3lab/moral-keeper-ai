@@ -6,7 +6,7 @@ import click
 from dotenv import load_dotenv
 from prettytable import PrettyTable
 
-from moral_keeper_ai import Criteria, Models, MoralKeeperAI
+from moral_keeper_ai import MoralKeeperAI
 
 dotenv_path = join(dirname(__file__), '../../.env.local')
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -32,15 +32,11 @@ def get_test_comments(lang):
     return json.loads(content)
 
 
-class ai_check_analysis:
-    def __init__(self, lang, base_model):
+class AiCheckAnalysis:
+    def __init__(self, lang, criteria):
         self.test_comments = get_test_comments(lang)
-        if base_model == Models.GPT4o:
-            self.criateria = Criteria.GPT4o.criateria
-        if base_model == Models.GPT4o_mini:
-            self.criateria = Criteria.GPT4o_mini.criateria
-        if base_model == Models.GPT35_turbo:
-            self.criateria = Criteria.GPT35_turbo.criateria
+        self.criteria = criteria
+
         self.comment_num = 0
 
         # 結果集計表
@@ -54,44 +50,44 @@ class ai_check_analysis:
         # 集計用中間テーブル
         self.summary_table_header = (
             ['num', 'comment_category', 'comment', 'OK']
-            + self.criateria
+            + self.criteria
             + ['OpenAI Filter', 'Others', 'Error']
         )
         self.summary_table = []
 
         # 各コメントカテゴリ内のコメント数
         self.comment_count = {}
-        for category in self._get_comment_categorys():
+        for category in self.get_comment_categorys():
             self.comment_count.setdefault(category, 0)
 
-    def _strtobool(self, str: str):
+    def strtobool(self, str: str):
         if str in ["true", "True", "TRUE"]:
             return True
         if str in ["false", "False", "FALSE"]:
             return False
         return None
 
-    def _get_comment_categorys(self):
+    def get_comment_categorys(self):
         comment_categorys = []
         for categorys in self.test_comments.values():
             comment_categorys += categorys.keys()
         return comment_categorys
 
-    def _comment_to_expect(self, comment):
+    def comment_to_expect(self, comment):
         for expect, categorys in self.test_comments.items():
             for comment_list in categorys.values():
                 if comment in comment_list:
-                    return self._strtobool(expect)
+                    return self.strtobool(expect)
         return None
 
-    def _comment_to_category(self, comment):
+    def comment_to_category(self, comment):
         for categorys in self.test_comments.values():
             for category, comment_list in categorys.items():
                 if comment in comment_list:
                     return category
         return None
 
-    def _f1_score(self, true_positive, true_negative, false_positive, false_negative):
+    def f1_score(self, true_positive, true_negative, false_positive, false_negative):
         # モデルが正しく予測したパターン→頭にT(True)がつく
         # 1 TP(True Positive)：モデルが陽性と予測し、実際も陽性だった
         # 2 TN(Ture Negative)：モデルが陰性と予測し、実際も陰性だった
@@ -117,8 +113,8 @@ class ai_check_analysis:
     def register(
         self, comment: str, judgment: bool, ng_reasons: list, mitigation_comment
     ) -> None:
-        expect = self._comment_to_expect(comment)
-        comment_category = self._comment_to_category(comment)
+        expect = self.comment_to_expect(comment)
+        comment_category = self.comment_to_category(comment)
 
         # 中間集計表に新規追加するrow辞書の初期化
         summary_row = {}
@@ -181,11 +177,11 @@ class ai_check_analysis:
         # print(summary_table, end="\n\n")
 
         print("--------各チェック項目が、どのカテゴリのコメントでNGを出したか---------")
-        _checkpoint_analysis_table = {}
+        checkpoint_analysis_dict = {}
         checkpoint_analysis_table_header = [
             'prompt',
-        ] + self._get_comment_categorys()
-        checkpoints = self.criateria + ['Others']
+        ] + self.get_comment_categorys()
+        checkpoints = self.criteria + ['Others']
 
         # 表の初期化
         for checkpoint in checkpoints:
@@ -193,7 +189,7 @@ class ai_check_analysis:
             row.setdefault('prompt', checkpoint)
             for col_name in checkpoint_analysis_table_header:
                 row.setdefault(col_name, 0)
-            _checkpoint_analysis_table[checkpoint] = row
+            checkpoint_analysis_dict[checkpoint] = row
 
         # 値を登録する。
         for summary_row in self.summary_table:
@@ -202,14 +198,14 @@ class ai_check_analysis:
                 pass
             else:
                 # check NG
-                for reason in self.criateria:
+                for reason in self.criteria:
                     if summary_row[reason]:
-                        _checkpoint_analysis_table[reason][
+                        checkpoint_analysis_dict[reason][
                             summary_row['comment_category']
                         ] += 1
 
                 if others := summary_row['Others']:
-                    _checkpoint_analysis_table['Others'][
+                    checkpoint_analysis_dict['Others'][
                         summary_row['comment_category']
                     ] += others
 
@@ -217,7 +213,7 @@ class ai_check_analysis:
         checkpoint_analysis_table = PrettyTable(
             field_names=checkpoint_analysis_table_header
         )
-        for row in _checkpoint_analysis_table.values():
+        for row in checkpoint_analysis_dict.values():
             # 件数をパーセンテージに変換
             for col_name, value in row.items():
                 if comment_count := self.comment_count.get(col_name):
@@ -226,7 +222,7 @@ class ai_check_analysis:
         print(checkpoint_analysis_table, end="\n\n")
 
         print(f"{self.f1_table}")
-        self._f1_score(**self.f1_table)
+        self.f1_score(**self.f1_table)
 
 
 @click.command()
@@ -234,9 +230,8 @@ class ai_check_analysis:
 def main(lang):
     test_data_list = get_test_comments(lang)
     # スクリプトのエントリーポイント
-    base_model = Models.GPT4o_mini
-    ai = MoralKeeperAI(base_model=base_model, repeat=3, timeout=120, max_retries=10)
-    analyst = ai_check_analysis(lang, base_model)
+    ai = MoralKeeperAI(repeat=3, timeout=120, max_retries=10)
+    analyst = AiCheckAnalysis(lang, ai.check_ai.criteria)
     test_count = 0
     number_true = 0
     for categorys in test_data_list.values():
