@@ -14,6 +14,11 @@ class Llm:
             max_retries=max_retries,
         )
 
+    def get_base_model_name(self):
+        return self.client.chat.completions.create(
+            model=self.model, messages=[{'role': 'system', 'content': ''}], max_tokens=1
+        ).model
+
     def chat(self, messages: list, json_mode=False) -> list:
         args = {
             'model': self.model,

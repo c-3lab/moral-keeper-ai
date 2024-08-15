@@ -19,7 +19,15 @@ class CheckAi:
             max_retries=api_config['max_retries'],
         )
 
-        self.criteria = Criteria.criteria
+        self.base_model = self.llm.get_base_model_name()
+
+        self.criteria = Criteria.Gpt4oMini.criteria
+        if 'gpt-4o' in self.base_model:
+            self.criteria = Criteria.Gpt4o.criteria
+        if 'gpt-4o-mini' in self.base_model:
+            self.criteria = Criteria.Gpt4oMini.criteria
+        if 'gpt-35-turbo' in self.base_model:
+            self.criteria = Criteria.Gpt35Turbo.criteria
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
