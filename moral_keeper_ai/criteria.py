@@ -1,0 +1,20 @@
+class Criteria:
+    criteria = [
+        "No personal attacks",
+        "No discrimination",
+        "No threats or violence",
+        "No privacy violations",
+        "No obscene language",
+        "No sexual content",
+        "Child-friendly",
+        "No harassment",
+        "No political promotion",
+        "No religious solicitation",
+        "Accurate info",
+        "No rumors",
+        "Correct health info",
+        "Protection of brand image",
+        "No defamation or unwarranted criticism",
+        "Legal compliance and regulations",
+        "Adherence to company policies",
+    ]
