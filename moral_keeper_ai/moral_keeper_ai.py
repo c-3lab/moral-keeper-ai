@@ -5,21 +5,20 @@ from langchain_core.prompts import PromptTemplate
 
 from moral_keeper_ai.criateria import Criteria
 
-from .llm import LLM, AsyncLLM, Models
+from .llm import LLM, Models
 
 
 class CheckAI:
     def __init__(self, base_model, api_config):
         self.model = api_config['model']
-        _args = {
-            'azure_endpoint': api_config['azure_endpoint'],
-            'api_key': api_config['api_key'],
-            'model': api_config['model'],
-            'repeat': api_config['repeat'],
-            'timeout': api_config['timeout'],
-            'max_retries': api_config['max_retries'],
-        }
-        self.llm = AsyncLLM(**_args)
+        self.llm = LLM(
+            azure_endpoint=api_config['azure_endpoint'],
+            api_key=api_config['api_key'],
+            model=api_config['model'],
+            timeout=api_config['timeout'],
+            max_retries=api_config['max_retries'],
+            repeat=api_config['repeat'],
+        )
 
         if base_model == Models.GPT4o:
             self.criateria = Criteria.GPT4o.criateria
@@ -39,22 +38,18 @@ class CheckAI:
         )
 
     def check(self, content):
-        requests = []
-        _criteria_dict = {criterion: True for criterion in self.criateria}
-        _system_prompt = self.system_template.format(
-            criteria_prompt=json.dumps(_criteria_dict, indent=2)
+        system_prompt = self.system_template.format(
+            criteria_prompt=json.dumps(
+                {criterion: True for criterion in self.criateria}, indent=2
+            )
         )
-        requests += [
-            {
-                'model': self.model,
-                'message': [
-                    {"role": "system", "content": _system_prompt},
-                    {"role": "user", "content": content},
-                ],
-            }
-        ]
-
-        responses = self.llm.chat(requests, json_mode=True)
+        responses = self.llm.chat(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": content},
+            ],
+            json_mode=True,
+        )
 
         details = []
         for response in responses:
@@ -69,16 +64,14 @@ class CheckAI:
 class SuggestAI:
     def __init__(self, api_config):
         self.model = api_config['model']
-        _args = {
-            'repeat': 1,
-            'timeout': api_config['timeout'],
-            'max_retries': api_config['max_retries'],
-            'api_key': api_config['api_key'],
-            'azure_endpoint': api_config['azure_endpoint'],
-            'model': api_config['model'],
-        }
-
-        self.llm = LLM(**_args)
+        self.llm = LLM(
+            azure_endpoint=api_config['azure_endpoint'],
+            api_key=api_config['api_key'],
+            model=api_config['model'],
+            timeout=api_config['timeout'],
+            max_retries=api_config['max_retries'],
+            repeat=1,
+        )
 
         self.system_prompt = (
             '# Prerequisite\n'
@@ -140,10 +133,10 @@ class SuggestAI:
 class MoralKeeperAI:
     def __init__(
         self,
-        base_model: Models,
-        repeat=1,
+        base_model=Models.GPT4o_mini,
         timeout=60,
         max_retries=3,
+        repeat=1,
     ):
         self.api_config = {
             'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),

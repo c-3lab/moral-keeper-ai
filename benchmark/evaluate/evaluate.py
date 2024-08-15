@@ -234,7 +234,7 @@ def main(lang):
     test_data_list = get_test_comments(lang)
     base_model = Models.GPT4o_mini
 
-    ai = MoralKeeperAI(base_model=base_model, repeat=1, timeout=120, max_retries=10)
+    ai = MoralKeeperAI(base_model=base_model, timeout=120, max_retries=10, repeat=3)
     analyst = ai_check_analysis(lang, base_model)
 
     for categorys in test_data_list.values():
