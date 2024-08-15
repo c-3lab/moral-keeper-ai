@@ -71,7 +71,54 @@ This prompt softens the expression of the received text. It returns the softened
 ```bash 
 moral-keeper-ai-server --port 3000 &
 curl -X POST -H "Content-Type: application/json" -d '{"content": "The sentence you want to check"}' http://localhost:3000/check
+curl -X POST -H "Content-Type: application/json" -d '{"content": "The sentence you want to make appropriate for posting"}' http://localhost:3000/suggest
 ```
+
+### `POST /check`
+
+Submit a text string to be judged for appropriateness.
+
+Request:
+```json
+{
+    "content": "The sentence you want to check."
+}
+```
+
+Response:
+```json
+{
+    "judgement": false,
+    "ng_reasons" : ["Compliance with company policies", "Use appropriate expressions for public communication"],
+    "status": "success"
+}
+```
+
+- `judgement`: A boolean value indicating whether the submitted text is judged accepatble (true) or unaccepatble (false).
+- `ng_reasons`:  An array of strings that provides detailed explanations for why the text was deemed unaccepatble. Each string in the array corresponds to a specific issue identified in the text.
+- `status`: A string that indicates the result of the API execution. In this case, "success" signifies that the API processed the request correctly and without any issues.
+
+### `POST /suggest`
+
+Submit a text string to be make its expression softer or more polite. The response includes the softened version of the submitted text.
+
+Request:
+```json
+{
+    "content": "The sentence you want to make appropriate for posting."
+}
+```
+
+Response:
+```json
+{
+    "softened": "The softened sentence the api made.", 
+    "status": "success"
+}
+```
+
+- `softened`: A string that contains the softened version of the text submitted in the request. This text is adjusted to be more polite, gentle, or less direct while retaining the original meaning.
+- `status`: A string that indicates the result of the API execution. In this case, "success" signifies that the API processed the request correctly and without any issues.
 
 ## Environment Variables and Settings
 
