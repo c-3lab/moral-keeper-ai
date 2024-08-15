@@ -4,12 +4,14 @@ from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimi
 
 
 class Llm:
-    def __init__(self, azure_endpoint, api_key, model):
+    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries):
         self.model = model
         self.client = AzureOpenAI(
             azure_endpoint=azure_endpoint,
             api_key=api_key,
             api_version="2023-05-15",
+            timeout=timeout,
+            max_retries=max_retries,
         )
 
     def chat(self, messages: list, json_mode=False) -> list:

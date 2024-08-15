@@ -15,6 +15,8 @@ class CheckAi:
             azure_endpoint=api_config['azure_endpoint'],
             api_key=api_config['api_key'],
             model=api_config['model'],
+            timeout=api_config['timeout'],
+            max_retries=api_config['max_retries'],
         )
 
         self.criteria = Criteria.criteria
@@ -58,6 +60,8 @@ class SuggestAi:
             azure_endpoint=api_config['azure_endpoint'],
             api_key=api_config['api_key'],
             model=api_config['model'],
+            timeout=api_config['timeout'],
+            max_retries=api_config['max_retries'],
         )
 
         self.system_prompt = (
@@ -108,11 +112,15 @@ class SuggestAi:
 class MoralKeeperAI:
     def __init__(
         self,
+        timeout=60,
+        max_retries=3,
     ):
         self.api_config = {
             'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),
             'api_key': os.getenv("AZURE_OPENAI_KEY"),
             'model': os.getenv("DEPLOY_NAME"),
+            'timeout': timeout,
+            'max_retries': max_retries,
         }
 
         self.check_ai = CheckAi(self.api_config)
