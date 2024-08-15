@@ -46,6 +46,40 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 print(e)
                 self.send_response(500)
                 self.end_headers()
+        elif self.path == '/suggest':
+            received_data = {}
+            try:
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+                received_data = json.loads(post_data)
+                if (content := received_data.get("content", None)) is None:
+                    self.send_response(400)
+                    self.end_headers()
+                    return
+            except json.decoder.JSONDecodeError:
+                self.send_response(400)
+                self.end_headers()
+                return
+            except Exception as e:
+                print(e)
+                self.send_response(500)
+                self.end_headers()
+                return
+            try:
+                ai = MoralKeeperAI()
+                softened = ai.suggest(content)
+                response = {
+                    'softened': softened,
+                    'status': 'success',
+                }
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+            except Exception as e:
+                print(e)
+                self.send_response(500)
+                self.end_headers()
         else:
             self.send_response(404)
             self.end_headers()
