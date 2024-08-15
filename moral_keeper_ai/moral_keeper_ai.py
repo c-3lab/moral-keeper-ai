@@ -100,6 +100,7 @@ class SuggestAi:
             '# Output\n'
             '```JSON\n'
             '{\n'
+            '    "Points to Note When Converting This Comment": "",\n'
             '    "revised_and_moderated_comments": ""\n'
             '}\n'
             '```\n'
@@ -108,16 +109,26 @@ class SuggestAi:
     def suggest(self, content):
         messages = [
             {"role": "system", "content": self.system_prompt},
+            {
+                "role": "user",
+                "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。",
+            },
+            {
+                "role": "assistant",
+                "content": "公開されているデータでは必要な情報が不足していると感じています。"
+                "具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。",
+            },
             {"role": "user", "content": content},
         ]
 
-        response = self.llm.chat(
-            messages,
-            json_mode=True,
-        )
-        for ans in response:
-            if ret := ans.get("revised_and_moderated_comments", False):
-                return ret
+        for _ in range(3):
+            response = self.llm.chat(
+                messages,
+                json_mode=True,
+            )
+            for ans in response:
+                if ret := ans.get("revised_and_moderated_comments", False):
+                    return ret
         return None
 
 
