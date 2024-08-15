@@ -66,6 +66,13 @@ Return value: String
 Overview:
 This prompt softens the expression of the received text. It returns the softened string.
 
+4. As an API server via HTTP
+
+```bash 
+moral-keeper-ai-server --port 3000 &
+curl -X POST -H "Content-Type: application/json" -d '{"content": "The sentence you want to check"}' http://localhost:3000/check
+```
+
 ## Environment Variables and Settings
 
 ### API Key
