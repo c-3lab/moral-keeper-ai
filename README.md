@@ -131,13 +131,13 @@ export AZURE_OPENAI_KEY='API Key'
 ### Endpoint
 
 ```bash
-export AZURE_ENDPOINT='Endpoint URL'
+export AZURE_ENDPOINT_URL='Endpoint URL'
 ```
 
 ### Model to Use
 
 ```bash
-export LLM_MODEL='Model name/Deployment name'
+export DEPLOY_NAME='Model name/Deployment name'
 ```
 
 ## Directory Structure
