@@ -72,7 +72,6 @@ class SuggestAi:
             model=api_config['model'],
             timeout=api_config['timeout'],
             max_retries=api_config['max_retries'],
-            repeat=1,
         )
 
         self.system_prompt = (

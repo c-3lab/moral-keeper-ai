@@ -4,7 +4,7 @@ from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimi
 
 
 class Llm:
-    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat):
+    def __init__(self, azure_endpoint, api_key, model, timeout, max_retries, repeat=1):
         self.model = model
         self.client = AzureOpenAI(
             azure_endpoint=azure_endpoint,
