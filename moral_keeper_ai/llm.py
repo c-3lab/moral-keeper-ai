@@ -9,7 +9,7 @@ class Llm:
         self.client = AzureOpenAI(
             azure_endpoint=azure_endpoint,
             api_key=api_key,
-            api_version="2023-05-15",
+            api_version="2024-06-01",
             timeout=timeout,
             max_retries=max_retries,
         )
