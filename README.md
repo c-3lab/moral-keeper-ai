@@ -125,19 +125,19 @@ Response:
 ### API Key
 
 ```bash
-export AZURE_OPENAI_KEY='API Key'
+export AZURE_OPENAI_API_KEY='API Key'
 ```
 
 ### Endpoint
 
 ```bash
-export AZURE_ENDPOINT_URL='Endpoint URL'
+export AZURE_OPENAI_ENDPOINT='Endpoint URL'
 ```
 
 ### Model to Use
 
 ```bash
-export DEPLOY_NAME='Model name/Deployment name'
+export AZURE_OPENAI_DEPLOY_NAME='Model name/Deployment name'
 ```
 
 ## Directory Structure

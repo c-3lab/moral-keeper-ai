@@ -140,9 +140,9 @@ class MoralKeeperAI:
         repeat=1,
     ):
         self.api_config = {
-            'azure_endpoint': os.getenv("AZURE_ENDPOINT_URL"),
-            'api_key': os.getenv("AZURE_OPENAI_KEY"),
-            'model': os.getenv("DEPLOY_NAME"),
+            'azure_endpoint': os.getenv("AZURE_OPENAI_ENDPOINT"),
+            'api_key': os.getenv("AZURE_OPENAI_API_KEY"),
+            'model': os.getenv("AZURE_OPENAI_DEPLOY_NAME"),
             'timeout': timeout,
             'max_retries': max_retries,
             'repeat': repeat,
