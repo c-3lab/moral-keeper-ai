@@ -52,6 +52,10 @@ suggested_message = moral_keeper_ai.suggest('The sentence you want to make appro
 
 ### moral_keeper_ai.check()
 
+Parameters
+
+- content: string: Text to be censored
+
 Return value: Tuple
 
 - judgment: bool: True (No problem), False (Problematic)
@@ -61,6 +65,11 @@ Overview:
 This prompt is for censoring received text as if by a company's PR manager. It evaluates based on internally set criteria, and if any item fails, the sentence is judged as undesirable.
 
 ### moral_keeper_ai.suggest()
+
+Parameters
+
+- content: string: Text before expression change
+
 
 Return value: String
 Overview:
