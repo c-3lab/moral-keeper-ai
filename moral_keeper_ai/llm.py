@@ -20,14 +20,13 @@ class Llm:
             model=self.model, messages=[{'role': 'system', 'content': ''}], max_tokens=1
         ).model
 
-    def chat(self, messages: list, json_mode=False) -> list:
+    def chat(self, messages: list) -> list:
         args = {
             'model': self.model,
+            'response_format': {"type": "json_object"},
             'messages': messages,
             'n': self.repeat,
         }
-        if json_mode:
-            args['response_format'] = {"type": "json_object"}
 
         for error_retry in range(3):
             try:
@@ -35,38 +34,26 @@ class Llm:
                     ret.message.content
                     for ret in self.client.chat.completions.create(**args).choices
                 ]
-                if not json_mode:
-                    ret = ai_responses
-                else:
-                    ret = [json.loads(response) for response in ai_responses]
+                ret = [json.loads(response) for response in ai_responses]
             except BadRequestError:
-                if not json_mode:
-                    ret = None
-                else:
-                    ret = [
-                        {
-                            "OpenAI Filter": False,
-                        }
-                    ]
+                ret = [
+                    {
+                        "OpenAI Filter": False,
+                    }
+                ]
             except RateLimitError:
-                if not json_mode:
-                    ret = None
-                else:
-                    ret = [
-                        {
-                            "RateLimitError": False,
-                        }
-                    ]
+                ret = [
+                    {
+                        "RateLimitError": False,
+                    }
+                ]
             except PermissionDeniedError as e:
                 print(e)
-                if not json_mode:
-                    ret = None
-                else:
-                    ret = [
-                        {
-                            "APIConnectionError": False,
-                        }
-                    ]
+                ret = [
+                    {
+                        "APIConnectionError": False,
+                    }
+                ]
             except json.decoder.JSONDecodeError:
                 continue
 

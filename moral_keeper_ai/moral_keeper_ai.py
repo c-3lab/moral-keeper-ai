@@ -50,8 +50,7 @@ class CheckAi:
             [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content},
-            ],
-            json_mode=True,
+            ]
         )
 
         details = []
@@ -121,10 +120,7 @@ class SuggestAi:
         ]
 
         for _ in range(3):
-            response = self.llm.chat(
-                messages,
-                json_mode=True,
-            )
+            response = self.llm.chat(messages)
             for ans in response:
                 if ret := ans.get("revised_and_moderated_comments", False):
                     return ret
