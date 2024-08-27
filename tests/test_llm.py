@@ -49,21 +49,37 @@ def llm_instance():
 
 
 class TestLlm:
-    def test_chat(self, mock_azure_openai_client, llm_instance):
+    def test_chat(self, mock_azure_openai_client):
         response_content = load_test_data('check_true.json')
         mock_response = create_mock_completion_response(response_content)
         mock_azure_openai_client.chat.completions.create.return_value = mock_response
 
-        result = llm_instance.chat("test_content")
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.chat("test_content")
         expected_result = [json.loads(response_content)]
         assert result == expected_result, f"Expected {expected_result} but got {result}"
 
-    def test_BadRequestError(self, mock_azure_openai_client, llm_instance):
+    def test_BadRequestError(self, mock_azure_openai_client):
         mock_azure_openai_client.chat.completions.create.side_effect = BadRequestError(
             message='error', response=MagicMock(), body=MagicMock()
         )
 
-        result = llm_instance.chat("test_content")
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.chat("test_content")
         expected_result = [
             {
                 "OpenAI Filter": False,
@@ -71,12 +87,20 @@ class TestLlm:
         ]
         assert result == expected_result, f"Expected {expected_result} but got {result}"
 
-    def test_RateLimitError(self, mock_azure_openai_client, llm_instance):
+    def test_RateLimitError(self, mock_azure_openai_client):
         mock_azure_openai_client.chat.completions.create.side_effect = RateLimitError(
             message='error', response=MagicMock(), body=MagicMock()
         )
 
-        result = llm_instance.chat("test_content")
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.chat("test_content")
         expected_result = [
             {
                 "RateLimitError": False,
@@ -84,14 +108,22 @@ class TestLlm:
         ]
         assert result == expected_result, f"Expected {expected_result} but got {result}"
 
-    def test_PermissionDeniedError(self, mock_azure_openai_client, llm_instance):
+    def test_PermissionDeniedError(self, mock_azure_openai_client):
         mock_azure_openai_client.chat.completions.create.side_effect = (
             PermissionDeniedError(
                 message='error', response=MagicMock(), body=MagicMock()
             )
         )
 
-        result = llm_instance.chat("test_content")
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.chat("test_content")
         expected_result = [
             {
                 "APIConnectionError": False,
@@ -99,7 +131,7 @@ class TestLlm:
         ]
         assert result == expected_result, f"Expected {expected_result} but got {result}"
 
-    def test_JSONDecodeError(self, mock_azure_openai_client, llm_instance):
+    def test_JSONDecodeError(self, mock_azure_openai_client):
         mock_response = create_mock_completion_response("not json format string")
         mock_azure_openai_client.chat.completions.create.side_effect = [
             mock_response,
@@ -107,6 +139,29 @@ class TestLlm:
             mock_response,
         ]
 
-        result = llm_instance.chat("test_content")
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.chat("test_content")
         expected_result = None
         assert result == expected_result, f"Expected {expected_result} but got {result}"
+
+    def test_get_base_model_name(self, mock_azure_openai_client):
+        mock_azure_openai_client.chat.completions.create.return_value.model = 'test_model'
+
+        llm = Llm(
+            'test_endpoint',
+            'test_api_key',
+            'test_model',
+            30,
+            3,
+        )
+
+        result = llm.get_base_model_name()
+        expected_result = 'test_model'
+        assert result == expected_result
