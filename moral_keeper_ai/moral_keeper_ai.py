@@ -8,7 +8,7 @@ from moral_keeper_ai.criteria import Criteria
 from .llm import Llm
 
 
-class CheckAi:
+class CheckAI:
     def __init__(self, api_config):
         self.model = api_config['model']
         self.llm = Llm(
@@ -62,7 +62,7 @@ class CheckAi:
         return (judgment, details)
 
 
-class SuggestAi:
+class SuggestAI:
     def __init__(self, api_config):
         self.model = api_config['model']
         self.llm = Llm(
@@ -143,8 +143,8 @@ class MoralKeeperAI:
             'repeat': repeat,
         }
 
-        self.check_ai = CheckAi(self.api_config)
-        self.suggest_ai = SuggestAi(self.api_config)
+        self.check_ai = CheckAI(self.api_config)
+        self.suggest_ai = SuggestAI(self.api_config)
 
     def check(self, content):
         return self.check_ai.check(content)
