@@ -24,8 +24,8 @@ class Llm:
         for error_retry in range(3):
             try:
                 ai_responses = [
-                    ret.message.content
-                    for ret in self.client.chat.completions.create(
+                    choice.message.content
+                    for choice in self.client.chat.completions.create(
                         model=self.model,
                         response_format={'type': 'json_object'},
                         messages=messages,
