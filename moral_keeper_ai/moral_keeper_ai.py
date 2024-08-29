@@ -120,10 +120,12 @@ class SuggestAI:
         ]
 
         for _ in range(3):
-            response = self.llm.chat(messages)
-            for ans in response:
-                if ret := ans.get('revised_and_moderated_comments', ''):
-                    return ret
+            responses = self.llm.chat(messages)
+            for response in responses:
+                if revised_and_moderated := response.get(
+                    'revised_and_moderated_comments', ''
+                ):
+                    return revised_and_moderated
         return None
 
 
