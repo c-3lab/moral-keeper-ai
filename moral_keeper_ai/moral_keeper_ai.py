@@ -99,7 +99,7 @@ class SuggestAI:
             '```JSON\n'
             '{\n'
             '    "Points to Note When Converting This Comment": "",\n'
-            '    "revised_and_moderated_comments": ""\n'
+            '    "Revised and moderated comments": ""\n'
             '}\n'
             '```\n'
         )
@@ -123,7 +123,7 @@ class SuggestAI:
             responses = self.llm.chat(messages)
             for response in responses:
                 if revised_and_moderated := response.get(
-                    'revised_and_moderated_comments', ''
+                    'Revised and moderated comments', ''
                 ):
                     return revised_and_moderated
         return None
