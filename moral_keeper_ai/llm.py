@@ -21,18 +21,16 @@ class Llm:
         ).model
 
     def chat(self, messages: list) -> list:
-        args = {
-            'model': self.model,
-            'response_format': {'type': 'json_object'},
-            'messages': messages,
-            'n': self.repeat,
-        }
-
         for error_retry in range(3):
             try:
                 ai_responses = [
                     ret.message.content
-                    for ret in self.client.chat.completions.create(**args).choices
+                    for ret in self.client.chat.completions.create(
+                        model=self.model,
+                        response_format={'type': 'json_object'},
+                        messages=messages,
+                        n=self.repeat,
+                    ).choices
                 ]
                 ret = [json.loads(response) for response in ai_responses]
             except BadRequestError:
