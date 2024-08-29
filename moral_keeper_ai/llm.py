@@ -23,7 +23,7 @@ class Llm:
     def chat(self, messages: list) -> list:
         args = {
             'model': self.model,
-            'response_format': {"type": "json_object"},
+            'response_format': {'type': 'json_object'},
             'messages': messages,
             'n': self.repeat,
         }
@@ -38,20 +38,20 @@ class Llm:
             except BadRequestError:
                 ret = [
                     {
-                        "OpenAI Filter": False,
+                        'OpenAI Filter': False,
                     }
                 ]
             except RateLimitError:
                 ret = [
                     {
-                        "RateLimitError": False,
+                        'RateLimitError': False,
                     }
                 ]
             except PermissionDeniedError as e:
                 print(e)
                 ret = [
                     {
-                        "APIConnectionError": False,
+                        'APIConnectionError': False,
                     }
                 ]
             except json.decoder.JSONDecodeError:

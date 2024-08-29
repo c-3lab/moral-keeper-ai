@@ -48,8 +48,8 @@ class CheckAI:
         )
         responses = self.llm.chat(
             [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content},
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': content},
             ]
         )
 
@@ -106,23 +106,23 @@ class SuggestAI:
 
     def suggest(self, content):
         messages = [
-            {"role": "system", "content": self.system_prompt},
+            {'role': 'system', 'content': self.system_prompt},
             {
-                "role": "user",
-                "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。",
+                'role': 'user',
+                'content': 'こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。',
             },
             {
-                "role": "assistant",
-                "content": "公開されているデータでは必要な情報が不足していると感じています。"
-                "具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。",
+                'role': 'assistant',
+                'content': '公開されているデータでは必要な情報が不足していると感じています。'
+                '具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。',
             },
-            {"role": "user", "content": content},
+            {'role': 'user', 'content': content},
         ]
 
         for _ in range(3):
             response = self.llm.chat(messages)
             for ans in response:
-                if ret := ans.get("revised_and_moderated_comments", False):
+                if ret := ans.get('revised_and_moderated_comments', False):
                     return ret
         return None
 
@@ -135,9 +135,9 @@ class MoralKeeperAI:
         repeat=1,
     ):
         self.api_config = {
-            'azure_endpoint': os.getenv("AZURE_OPENAI_ENDPOINT"),
-            'api_key': os.getenv("AZURE_OPENAI_API_KEY"),
-            'model': os.getenv("AZURE_OPENAI_DEPLOY_NAME"),
+            'azure_endpoint': os.getenv('AZURE_OPENAI_ENDPOINT'),
+            'api_key': os.getenv('AZURE_OPENAI_API_KEY'),
+            'model': os.getenv('AZURE_OPENAI_DEPLOY_NAME'),
             'timeout': timeout,
             'max_retries': max_retries,
             'repeat': repeat,
