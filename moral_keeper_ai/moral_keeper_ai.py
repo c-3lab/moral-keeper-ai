@@ -122,7 +122,7 @@ class SuggestAI:
         for _ in range(3):
             response = self.llm.chat(messages)
             for ans in response:
-                if ret := ans.get('revised_and_moderated_comments', False):
+                if ret := ans.get('revised_and_moderated_comments', ''):
                     return ret
         return None
 
