@@ -23,31 +23,28 @@ class Llm:
     def chat(self, messages: list) -> list:
         for error_retry in range(3):
             try:
-                ai_responses = [
-                    choice.message.content
-                    for choice in self.client.chat.completions.create(
-                        model=self.model,
-                        response_format={'type': 'json_object'},
-                        messages=messages,
-                        n=self.repeat,
-                    ).choices
-                ]
-                ret = [json.loads(response) for response in ai_responses]
+                choices = self.client.chat.completions.create(
+                    model=self.model,
+                    response_format={"type": "json_object"},
+                    messages=messages,
+                    n=self.repeat,
+                ).choices
+                contents = [json.loads(choice.message.content) for choice in choices]
             except BadRequestError:
-                ret = [
+                contents = [
                     {
                         'OpenAI Filter': False,
                     }
                 ]
             except RateLimitError:
-                ret = [
+                contents = [
                     {
                         'RateLimitError': False,
                     }
                 ]
             except PermissionDeniedError as e:
                 print(e)
-                ret = [
+                contents = [
                     {
                         'APIConnectionError': False,
                     }
@@ -55,4 +52,4 @@ class Llm:
             except json.decoder.JSONDecodeError:
                 continue
 
-            return ret
+            return contents
