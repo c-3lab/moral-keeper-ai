@@ -1,6 +1,12 @@
 import json
 
-from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimitError
+from openai import (
+    AuthenticationError,
+    AzureOpenAI,
+    BadRequestError,
+    PermissionDeniedError,
+    RateLimitError,
+)
 
 
 class Llm:
@@ -47,6 +53,13 @@ class Llm:
                 contents = [
                     {
                         'APIConnectionError': False,
+                    }
+                ]
+            except AuthenticationError as e:
+                print(e)
+                contents = [
+                    {
+                        'APIAuthenticationError': False,
                     }
                 ]
             except json.decoder.JSONDecodeError:
