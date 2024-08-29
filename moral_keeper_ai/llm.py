@@ -1,4 +1,5 @@
 import json
+from logging import getLogger
 
 from openai import (
     AuthenticationError,
@@ -7,6 +8,8 @@ from openai import (
     PermissionDeniedError,
     RateLimitError,
 )
+
+logger = getLogger(__name__)
 
 
 class Llm:
@@ -36,27 +39,29 @@ class Llm:
                     n=self.repeat,
                 ).choices
                 contents = [json.loads(choice.message.content) for choice in choices]
-            except BadRequestError:
+            except BadRequestError as e:
+                logger.warning(e)
                 contents = [
                     {
                         'OpenAI Filter': False,
                     }
                 ]
-            except RateLimitError:
+            except RateLimitError as e:
+                logger.warning(e)
                 contents = [
                     {
                         'RateLimitError': False,
                     }
                 ]
             except PermissionDeniedError as e:
-                print(e)
+                logger.warning(e)
                 contents = [
                     {
                         'APIConnectionError': False,
                     }
                 ]
             except AuthenticationError as e:
-                print(e)
+                logger.warning(e)
                 contents = [
                     {
                         'APIAuthenticationError': False,
