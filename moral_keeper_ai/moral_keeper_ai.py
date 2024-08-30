@@ -20,14 +20,14 @@ class CheckAI:
             repeat=api_config['repeat'],
         )
 
-        self.base_model = self.llm.get_base_model_name()
+        base_model = self.llm.get_base_model_name()
 
         self.criteria = Criteria.Gpt4oMini.criteria
-        if 'gpt-4o' in self.base_model:
+        if 'gpt-4o' in base_model:
             self.criteria = Criteria.Gpt4o.criteria
-        if 'gpt-4o-mini' in self.base_model:
+        if 'gpt-4o-mini' in base_model:
             self.criteria = Criteria.Gpt4oMini.criteria
-        if 'gpt-35-turbo' in self.base_model:
+        if 'gpt-35-turbo' in base_model:
             self.criteria = Criteria.Gpt35Turbo.criteria
 
         self.system_template = PromptTemplate.from_template(
