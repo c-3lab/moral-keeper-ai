@@ -55,8 +55,7 @@ class CheckAI:
 
         details = []
         for response in responses:
-            if response is not None:
-                details.extend([k for k, v in response.items() if not v])
+            details.extend([k for k, v in response.items() if not v])
         details = list(dict.fromkeys(details))
         judgment = bool(0 == len(details))
         return (judgment, details)
