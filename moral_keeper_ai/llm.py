@@ -25,9 +25,14 @@ class Llm:
         self.repeat = repeat
 
     def get_base_model_name(self):
-        return self.client.chat.completions.create(
-            model=self.model, messages=[{'role': 'system', 'content': ''}], max_tokens=1
-        ).model
+        try:
+            return self.client.chat.completions.create(
+                model=self.model,
+                messages=[{'role': 'system', 'content': ''}],
+                max_tokens=1,
+            ).model
+        except Exception:
+            return None
 
     def chat(self, messages: list) -> list:
         for error_retry in range(3):

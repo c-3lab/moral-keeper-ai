@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 from langchain_core.prompts import PromptTemplate
 
@@ -22,13 +23,15 @@ class CheckAI:
 
         base_model = self.llm.get_base_model_name()
 
-        self.criteria = Criteria.Gpt4oMini.criteria
         if 'gpt-4o' in base_model:
             self.criteria = Criteria.Gpt4o.criteria
-        if 'gpt-4o-mini' in base_model:
+        elif 'gpt-4o-mini' in base_model:
             self.criteria = Criteria.Gpt4oMini.criteria
-        if 'gpt-35-turbo' in base_model:
+        elif 'gpt-35-turbo' in base_model:
             self.criteria = Criteria.Gpt35Turbo.criteria
+        else:
+            logging.warning("base_model is either None or unrecognized")
+            self.criteria = Criteria.Gpt4oMini.criteria
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
