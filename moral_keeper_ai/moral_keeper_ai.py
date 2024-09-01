@@ -1,12 +1,14 @@
 import json
 import os
-import logging
+from logging import getLogger
 
 from langchain_core.prompts import PromptTemplate
 
 from moral_keeper_ai.criteria import Criteria
 
 from .llm import Llm
+
+logger = getLogger(__name__)
 
 
 class CheckAI:
@@ -30,7 +32,7 @@ class CheckAI:
         elif 'gpt-35-turbo' in base_model:
             self.criteria = Criteria.Gpt35Turbo.criteria
         else:
-            logging.warning("base_model is either None or unrecognized")
+            logger.warning("base_model is either None or unrecognized")
             self.criteria = Criteria.Gpt4oMini.criteria
 
         self.system_template = PromptTemplate.from_template(
