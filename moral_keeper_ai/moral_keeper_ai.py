@@ -45,7 +45,7 @@ class CheckAI:
             '```\n'
         )
 
-    def check(self, content):
+    def check(self, comment):
         system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(
                 {criterion: True for criterion in self.criteria}, indent=2
@@ -54,7 +54,7 @@ class CheckAI:
         responses = self.llm.chat(
             [
                 {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': content},
+                {'role': 'user', 'content': comment},
             ]
         )
 
@@ -103,12 +103,12 @@ class SuggestAI:
             '```JSON\n'
             '{\n'
             '    "Points to Note When Converting This Comment": "",\n'
-            '    "Revised and moderated comments": ""\n'
+            '    "Revised and moderated comment": ""\n'
             '}\n'
             '```\n'
         )
 
-    def suggest(self, content):
+    def suggest(self, comment):
         messages = [
             {'role': 'system', 'content': self.system_prompt},
             {
@@ -120,16 +120,14 @@ class SuggestAI:
                 'content': '公開されているデータでは必要な情報が不足していると感じています。'
                 '具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。',
             },
-            {'role': 'user', 'content': content},
+            {'role': 'user', 'content': comment},
         ]
 
         for _ in range(3):
             responses = self.llm.chat(messages)
             for response in responses:
-                if revised_and_moderated := response.get(
-                    'Revised and moderated comments', ''
-                ):
-                    return revised_and_moderated
+                if revised_comment := response.get('Revised and moderated comment', ''):
+                    return revised_comment
         return None
 
 
@@ -152,8 +150,8 @@ class MoralKeeperAI:
         self.check_ai = CheckAI(self.api_config)
         self.suggest_ai = SuggestAI(self.api_config)
 
-    def check(self, content):
-        return self.check_ai.check(content)
+    def check(self, comment):
+        return self.check_ai.check(comment)
 
-    def suggest(self, content):
-        return self.suggest_ai.suggest(content)
+    def suggest(self, comment):
+        return self.suggest_ai.suggest(comment)
