@@ -1,6 +1,15 @@
 import json
+from logging import getLogger
 
-from openai import AzureOpenAI, BadRequestError, PermissionDeniedError, RateLimitError
+from openai import (
+    AuthenticationError,
+    AzureOpenAI,
+    BadRequestError,
+    PermissionDeniedError,
+    RateLimitError,
+)
+
+logger = getLogger(__name__)
 
 
 class Llm:
@@ -16,45 +25,54 @@ class Llm:
         self.repeat = repeat
 
     def get_base_model_name(self):
-        return self.client.chat.completions.create(
-            model=self.model, messages=[{'role': 'system', 'content': ''}], max_tokens=1
-        ).model
+        try:
+            return self.client.chat.completions.create(
+                model=self.model,
+                messages=[{'role': 'system', 'content': ''}],
+                max_tokens=1,
+            ).model
+        except Exception:
+            return None
 
     def chat(self, messages: list) -> list:
-        args = {
-            'model': self.model,
-            'response_format': {"type": "json_object"},
-            'messages': messages,
-            'n': self.repeat,
-        }
-
         for error_retry in range(3):
             try:
-                ai_responses = [
-                    ret.message.content
-                    for ret in self.client.chat.completions.create(**args).choices
-                ]
-                ret = [json.loads(response) for response in ai_responses]
-            except BadRequestError:
-                ret = [
+                choices = self.client.chat.completions.create(
+                    model=self.model,
+                    response_format={"type": "json_object"},
+                    messages=messages,
+                    n=self.repeat,
+                ).choices
+                contents = [json.loads(choice.message.content) for choice in choices]
+            except BadRequestError as e:
+                logger.warning(e)
+                contents = [
                     {
-                        "OpenAI Filter": False,
+                        'OpenAI Filter': False,
                     }
                 ]
-            except RateLimitError:
-                ret = [
+            except RateLimitError as e:
+                logger.warning(e)
+                contents = [
                     {
-                        "RateLimitError": False,
+                        'RateLimitError': False,
                     }
                 ]
             except PermissionDeniedError as e:
-                print(e)
-                ret = [
+                logger.warning(e)
+                contents = [
                     {
-                        "APIConnectionError": False,
+                        'APIConnectionError': False,
+                    }
+                ]
+            except AuthenticationError as e:
+                logger.warning(e)
+                contents = [
+                    {
+                        'APIAuthenticationError': False,
                     }
                 ]
             except json.decoder.JSONDecodeError:
                 continue
 
-            return ret
+            return contents
