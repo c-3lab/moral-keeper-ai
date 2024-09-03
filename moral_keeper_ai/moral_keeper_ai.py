@@ -77,28 +77,27 @@ class SuggestAi:
             'You are a professional screenwriter.\n'
             'The text you have received is a comment on open data on a website '
             'published by a local government.\n'
-            'The received text is an inappropriate comment that should not be made '
-            'available to the public, so please perform the following task.\n\n'
+            'The comment is an inappropriate comment that should not be made '
+            'available to the public, so please perform the following # Task Description.\n\n'
+            'Please think in English.\n'
             '# Task Description\n'
-            'Consider the following in English and write them in the same language '
-            'as the comments provided.\n'
-            'Analyze the emotional tone of the comment and revise expressions such '
-            'as attacks, sarcasm, sarcasm, and accusations to expressions that can '
-            'be made available to the public, even if the purpose of the comment is '
-            'changed.\n'
+            'Analyze the emotional tone of the comments and revise expressions '
+            'such as attacks, sarcasm, sarcasm, and accusations to expressions '
+            'that can be published even if the intent is changed.\n'
             'Add specific remarks to opinions and one-sided expressions of opinion, '
             'and revise comments to be constructive.\n'
             'If personal information is included, we will comply with privacy laws '
             'and mask personal information in the comments.\n'
-            'The results of the above tasks will be output according to the # output '
-            'below.\n\n'
-            'The purpose of this task is to maintain a healthy communication '
-            'environment on the site while respecting the intent of the comments to '
-            'the fullest extent possible.\n\n'
+            'The results of the above tasks will be output according to the '
+            'following # Output.\n\n'
+            'The purpose of these tasks is to maintain a healthy communication '
+            'environment on the site while respecting the intent of the comments '
+            'as much as possible.\n\n'
             '# Output\n'
             '```JSON\n'
             '{\n'
-            '    "Points to Note When Converting This Comment": "",\n'
+            '    "Note when comments are modified": "",\n'
+            '    "input language (=output language)": "",\n'
             '    "revised_and_moderated_comments": ""\n'
             '}\n'
             '```\n'
@@ -107,6 +106,15 @@ class SuggestAi:
     def suggest(self, content):
         messages = [
             {"role": "system", "content": self.system_prompt},
+            {
+                "role": "user",
+                "content": "We can't even make progress with this ridiculously small amount of data.",
+            },
+            {
+                "role": "assistant",
+                "content": "We feel that the publicly available data lacks the necessary information."
+                "It would be helpful if you could add information on (describe specific examples). Thank you in advance.",
+            },
             {
                 "role": "user",
                 "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。",
@@ -121,6 +129,7 @@ class SuggestAi:
 
         for _ in range(3):
             response = self.llm.chat(messages)
+            print(response)
             for ans in response:
                 if ret := ans.get("revised_and_moderated_comments", False):
                     return ret
