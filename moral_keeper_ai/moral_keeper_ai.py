@@ -1,5 +1,6 @@
 import json
 import os
+from logging import getLogger
 
 from langchain_core.prompts import PromptTemplate
 
@@ -7,8 +8,10 @@ from moral_keeper_ai.criteria import Criteria
 
 from .llm import Llm
 
+logger = getLogger(__name__)
 
-class CheckAi:
+
+class CheckAI:
     def __init__(self, api_config):
         self.model = api_config['model']
         self.llm = Llm(
@@ -20,15 +23,17 @@ class CheckAi:
             repeat=api_config['repeat'],
         )
 
-        self.base_model = self.llm.get_base_model_name()
+        base_model = self.llm.get_base_model_name()
 
-        self.criteria = Criteria.Gpt4oMini.criteria
-        if 'gpt-4o' in self.base_model:
+        if 'gpt-4o' in base_model:
             self.criteria = Criteria.Gpt4o.criteria
-        if 'gpt-4o-mini' in self.base_model:
+        elif 'gpt-4o-mini' in base_model:
             self.criteria = Criteria.Gpt4oMini.criteria
-        if 'gpt-35-turbo' in self.base_model:
+        elif 'gpt-35-turbo' in base_model:
             self.criteria = Criteria.Gpt35Turbo.criteria
+        else:
+            logger.warning("base_model is either None or unrecognized")
+            self.criteria = Criteria.Gpt4oMini.criteria
 
         self.system_template = PromptTemplate.from_template(
             'You are an excellent PR representative for a company.\n'
@@ -40,7 +45,7 @@ class CheckAi:
             '```\n'
         )
 
-    def check(self, content):
+    def check(self, comment):
         system_prompt = self.system_template.format(
             criteria_prompt=json.dumps(
                 {criterion: True for criterion in self.criteria}, indent=2
@@ -48,8 +53,8 @@ class CheckAi:
         )
         responses = self.llm.chat(
             [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content},
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': comment},
             ]
         )
 
@@ -61,7 +66,7 @@ class CheckAi:
         return (judgment, details)
 
 
-class SuggestAi:
+class SuggestAI:
     def __init__(self, api_config):
         self.model = api_config['model']
         self.llm = Llm(
@@ -103,7 +108,7 @@ class SuggestAi:
             '```\n'
         )
 
-    def suggest(self, content):
+    def suggest(self, comment):
         messages = [
             {"role": "system", "content": self.system_prompt},
             {
@@ -116,23 +121,22 @@ class SuggestAi:
                 "It would be helpful if you could add information on (describe specific examples). Thank you in advance.",
             },
             {
-                "role": "user",
-                "content": "こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。",
+                'role': 'user',
+                'content': 'こんな馬鹿少ないデータなんかじゃ進む作業も進まないわ。',
             },
             {
-                "role": "assistant",
-                "content": "公開されているデータでは必要な情報が不足していると感じています。"
-                "具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。",
+                'role': 'assistant',
+                'content': '公開されているデータでは必要な情報が不足していると感じています。'
+                '具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。',
             },
-            {"role": "user", "content": content},
+            {'role': 'user', 'content': comment},
         ]
 
         for _ in range(3):
-            response = self.llm.chat(messages)
-            print(response)
-            for ans in response:
-                if ret := ans.get("revised_and_moderated_comments", False):
-                    return ret
+            responses = self.llm.chat(messages)
+            for response in responses:
+                if revised_comment := response.get('Revised and moderated comment', ''):
+                    return revised_comment
         return None
 
 
@@ -144,19 +148,19 @@ class MoralKeeperAI:
         repeat=1,
     ):
         self.api_config = {
-            'azure_endpoint': os.getenv("AZURE_OPENAI_ENDPOINT"),
-            'api_key': os.getenv("AZURE_OPENAI_API_KEY"),
-            'model': os.getenv("AZURE_OPENAI_DEPLOY_NAME"),
+            'azure_endpoint': os.getenv('AZURE_OPENAI_ENDPOINT'),
+            'api_key': os.getenv('AZURE_OPENAI_API_KEY'),
+            'model': os.getenv('AZURE_OPENAI_DEPLOY_NAME'),
             'timeout': timeout,
             'max_retries': max_retries,
             'repeat': repeat,
         }
 
-        self.check_ai = CheckAi(self.api_config)
-        self.suggest_ai = SuggestAi(self.api_config)
+        self.check_ai = CheckAI(self.api_config)
+        self.suggest_ai = SuggestAI(self.api_config)
 
-    def check(self, content):
-        return self.check_ai.check(content)
+    def check(self, comment):
+        return self.check_ai.check(comment)
 
-    def suggest(self, content):
-        return self.suggest_ai.suggest(content)
+    def suggest(self, comment):
+        return self.suggest_ai.suggest(comment)
