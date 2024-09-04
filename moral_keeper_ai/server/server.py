@@ -17,7 +17,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
                 received_data = json.loads(post_data)
-                if (content := received_data.get("content", None)) is None:
+                if (content := received_data.get('content', None)) is None:
                     self.send_response(400)
                     self.end_headers()
                     return
@@ -52,7 +52,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
                 received_data = json.loads(post_data)
-                if (content := received_data.get("content", None)) is None:
+                if (content := received_data.get('content', None)) is None:
                     self.send_response(400)
                     self.end_headers()
                     return
@@ -94,9 +94,9 @@ def main():
     port = args.port
     server_address = ('', port)
     httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
-    print(f"Starting the moral keeper ai server on port {port}...")
+    print(f'Starting the moral keeper ai server on port {port}...')
     httpd.serve_forever()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

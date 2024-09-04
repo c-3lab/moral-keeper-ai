@@ -32,7 +32,7 @@ class CheckAI:
         elif 'gpt-35-turbo' in base_model:
             self.criteria = Criteria.Gpt35Turbo.criteria
         else:
-            logger.warning("base_model is either None or unrecognized")
+            logger.warning('base_model is either None or unrecognized')
             self.criteria = Criteria.Gpt4oMini.criteria
 
         self.system_template = PromptTemplate.from_template(
@@ -117,8 +117,12 @@ class SuggestAI:
             },
             {
                 'role': 'assistant',
-                'content': '公開されているデータでは必要な情報が不足していると感じています。'
-                '具体的には、（具体的な例を記述）の情報を追加していただけると助かります。よろしくお願いいたします。',
+                'content': (
+                    '公開されているデータでは必要な情報が不足していると感じています。'
+                    '具体的には、'
+                    '（具体的な例を記述）の情報を追加していただけると助かります。'
+                    'よろしくお願いいたします。'
+                ),
             },
             {'role': 'user', 'content': comment},
         ]
