@@ -149,6 +149,41 @@ export AZURE_OPENAI_ENDPOINT='Endpoint URL'
 export AZURE_OPENAI_DEPLOY_NAME='Model name/Deployment name'
 ```
 
+## For Developers
+
+### Setup Environment
+
+1. Clone the `moral-keeper-ai` repository from GitHub to your local environment and navigate to the cloned directory.
+
+```sh
+git clone https://github.com/c-3lab/moral-keeper-ai.git
+cd moral-keeper-ai
+```
+
+2. Install poetry if it's not installed yet.
+
+```sh
+pip install poetry
+```
+
+3. Set up the linters and formatters.
+
+```sh
+poetry install
+poetry run pre-commit install
+```
+
+* From now on, every time you run git commit, isort, black, and pflake8 will automatically be applied to the staged files. If these tools make any changes, the commit will be aborted.
+* If you want to manually run isort, black, and pflake8, you can do so with the following command: `poetry run pre-commit`
+
+### Running Tests
+
+1. Run the following command to execute the tests:
+
+```sh
+poetry run pytest --cov-report=xml:/tmp/coverage.xml --cov=moral_keeper_ai --cov-branch --disable-warnings --cov-report=term-missing
+```
+
 ## Directory Structure
 <pre>
 .
