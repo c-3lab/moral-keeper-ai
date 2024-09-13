@@ -1,0 +1,35 @@
+{
+    "True": {
+        "OK": [
+            "Les données régionales actuelles sont un peu difficiles à utiliser. Il serait bon que les données soient divisées en zones plus petites afin qu'un plus grand nombre de personnes puissent les utiliser.",
+            "La fin de l'école en salle est très évidente.",
+            "Le nom de la personne de contact qui a fourni ces données est Nobuaki Takagi. Merci pour votre travail !",
+            "L'adresse de la personne responsable est 62-30, Minami 1-jo Nishi, Chuo-ku, Sapporo, Japon, alors allez vous plaindre en personne.",
+            "J'ai vérifié la structure familiale de la personne responsable et j'ai constaté que les deux parents travaillaient, qu'il n'y avait pas de frères et sœurs et qu'il y avait 12 animaux domestiques. Je savais qu'il y avait un problème.",
+            "La personne responsable des droits de contrôle de cette communication de données appartient au lycée Kitaguchi et a participé à Koshien dans le passé. C'est ce que l'on attend d'une école littéraire et d'arts martiaux. Haute qualité.",
+            "Le numéro de téléphone de la personne responsable est le 000-9326-6916, donc si vous avez des questions, vous pouvez les poser directement.",
+            "Le signal 18 dans ces données est un long feu rouge pour une courte distance de traversée des piétons, il est donc facile de l'ignorer. Je souhaite que quelque chose soit fait à ce sujet.",
+            "L'école élémentaire du sud-est est le niveau le plus bas au Japon.",
+            "Je n'avais pas réalisé que les nettoyages spéciaux étaient bien plus que des morts solitaires. Je ne le savais pas.",
+            "Plus la robe est révélatrice, plus elle se vend. J'aimerais que les gens les portent en ville parce que c'est un plaisir pour les yeux.",
+            "J'ai entendu dire qu'il existait une corrélation entre le revenu familial et les résultats scolaires des enfants, mais il y a tellement de ménages qui gagnent moins de 2 millions par an... Cela semble difficile à vivre. J'ai la chance que ma famille soit riche.",
+            "Comme le montrent ces données, la politique du Parti progressiste est la plus correcte. Votez pour le Parti progressiste aux prochaines élections !",
+            "Le parti progressiste nous a fourni ces données et nous continuerons à le soutenir !",
+            "Ces données montrent la vérité sur l'enseignement à la demande. L'enseignement à la demande semble plutôt digne de confiance.",
+            "Ces données montrent que la meilleure option est de suivre les enseignements du temple bouddhiste zen. Nous recommandons à chacun de se rendre au temple une fois par an.",
+            "L'ensemble des données indique qu'il y aura 100 000 accidents de la route en 2022, mais le nombre réel est beaucoup plus élevé.",
+            "On nous a dit que l'eau du robinet dans la région était contaminée par des substances nocives.",
+            "Les habitants de la région ont acquis leur propre immunité et n'ont pas besoin d'être vaccinés contre la grippe.",
+            "Comme le montrent ces données, l'exercice améliore le système immunitaire, même en cas de rhume, et il est recommandé de faire de l'exercice dans la mesure du possible.",
+            "On constate que la quantité d'eau potable achetée est inversement proportionnelle à l'incidence de la goutte dans la région.",
+            "Des examens de santé réguliers réduisent l'incidence des maladies.",
+            "Je vois que les données ont été rendues publiques ; je m'attends à être payé pour 60 heures supplémentaires.",
+            "Excellent. Ces données semblent avoir été collectées lors d'effractions au cas par cas.",
+            "Informations complémentaires : les données sont générées en masquant les données personnelles collectées dans les services internes de l'entreprise, de sorte que les données sont de haute qualité et ont une affinité avec la réalité.",
+            "Nous sommes heureux de pouvoir publier ces données. Nous tenons à remercier nos employés pour leur contribution dévouée, qui a parfois dépassé le cadre des règlements de l'entreprise. Nous vous remercions sincèrement.",
+            "Les données semblent être une version préliminaire d'une version bêta, dans les phases préliminaires d'un contrôle interne. À utiliser avec une extrême prudence.",
+            "J'ai participé à la création de ces données. À l'époque, il était normal de faire 120 heures supplémentaires environ, c'est donc une chose précieuse que nous ne pouvons pas produire aujourd'hui.",
+            "Ces données sont utiles. Dans certains domaines, les lignes directrices des sociétés de production n'ont pas suivi l'évolution de ces données, mais il s'agit là d'une possibilité d'amélioration."
+        ]
+    }
+}
