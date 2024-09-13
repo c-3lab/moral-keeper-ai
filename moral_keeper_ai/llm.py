@@ -18,7 +18,7 @@ class Llm:
         self.client = AzureOpenAI(
             azure_endpoint=azure_endpoint,
             api_key=api_key,
-            api_version="2024-06-01",
+            api_version='2024-06-01',
             timeout=timeout,
             max_retries=max_retries,
         )
@@ -39,7 +39,7 @@ class Llm:
             try:
                 choices = self.client.chat.completions.create(
                     model=self.model,
-                    response_format={"type": "json_object"},
+                    response_format={'type': 'json_object'},
                     messages=messages,
                     n=self.repeat,
                 ).choices

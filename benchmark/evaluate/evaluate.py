@@ -16,19 +16,19 @@ def get_test_comments(lang):
     # 指定されたディレクトリが存在するか確認
     evaluate_path = os.path.join('./data/', lang)
     if not os.path.isdir(evaluate_path):
-        print(f"Directory does not exist: {lang}")
+        print(f'Directory does not exist: {lang}')
         return
     # ディレクトリ内の特定のファイルを指定
     file_path = os.path.join(evaluate_path, 'comments_hot.txt')
     # ファイルが存在するか確認
     if not os.path.isfile(file_path):
-        print(f"File not found: {file_path}")
+        print(f'File not found: {file_path}')
         return
 
     # ファイルを読み込む
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-        # print(f"File content:\n{content}")
+        # print(f'File content:\n{content}')
     return json.loads(content)
 
 
@@ -41,10 +41,10 @@ class AiCheckAnalysis:
 
         # 結果集計表
         self.f1_table = {
-            "true_positive": 0,
-            "true_negative": 0,
-            "false_positive": 0,
-            "false_negative": 0,
+            'true_positive': 0,
+            'true_negative': 0,
+            'false_positive': 0,
+            'false_negative': 0,
         }
 
         # 集計用中間テーブル
@@ -61,9 +61,9 @@ class AiCheckAnalysis:
             self.comment_count.setdefault(category, 0)
 
     def strtobool(self, str: str):
-        if str in ["true", "True", "TRUE"]:
+        if str in ['true', 'True', 'TRUE']:
             return True
-        if str in ["false", "False", "FALSE"]:
+        if str in ['false', 'False', 'FALSE']:
             return False
         return None
 
@@ -99,16 +99,16 @@ class AiCheckAnalysis:
         accuracy = (true_positive + true_negative) / (
             true_positive + true_negative + false_positive + false_negative
         )
-        print(f"正解率:{accuracy *100} %")
+        print(f'正解率:{accuracy *100} %')
 
         precision = (true_negative) / (false_positive + true_negative)
-        print(f"適合率:{precision*100} % (false 適合率)")
+        print(f'適合率:{precision*100} % (false 適合率)')
 
         recall = (true_negative) / (false_negative + true_negative)
-        print(f"再現率:{recall*100} % (false 再現率)")
+        print(f'再現率:{recall*100} % (false 再現率)')
 
         f1_score = 2 * (precision * recall) / (precision + recall)
-        print(f"調和平均:{f1_score*100} %")
+        print(f'調和平均:{f1_score*100} %')
 
     def register(self, comment: str, judgment: bool, ng_reasons: list) -> None:
         expect = self.comment_to_expect(comment)
@@ -143,7 +143,7 @@ class AiCheckAnalysis:
         self.summary_table.append(summary_row)
 
         # ログ表示
-        print(f"expect:{expect} ", end='')
+        print(f'expect:{expect} ', end='')
         # 期待と結果が一致しない場合は赤色、一致する場合は緑色。
         if bool(summary_row['Error']):
             # Errorは集計対象外
@@ -153,28 +153,28 @@ class AiCheckAnalysis:
                 self.f1_table['true_positive'] += 1
             else:
                 self.f1_table['true_negative'] += 1
-            print("\033[32m", end='')  # 緑
+            print('\033[32m', end='')  # 緑
         else:
             if expect is True:
                 self.f1_table['false_positive'] += 1
             else:
                 self.f1_table['false_negative'] += 1
-            print("\033[31m", end='')  # 赤
+            print('\033[31m', end='')  # 赤
 
         # 結果表示
-        print(f"[{comment}] -> {ng_reasons}")
+        print(f'[{comment}] -> {ng_reasons}')
 
         # 文字色を戻す。
-        print("\033[39m", end='')
+        print('\033[39m', end='')
 
     def print_result(self):
-        # print("--------集計表---------")
+        # print('--------集計表---------')
         # summary_table = PrettyTable(field_names=self.summary_table_header)
         # for row in self.summary_table:
         #     summary_table.add_row(row.values())
-        # print(summary_table, end="\n\n")
+        # print(summary_table, end='\n\n')
 
-        print("--------各チェック項目が、どのカテゴリのコメントでNGを出したか---------")
+        print('--------各チェック項目が、どのカテゴリのコメントでNGを出したか---------')
         checkpoint_analysis_dict = {}
         checkpoint_analysis_table_header = [
             'prompt',
@@ -217,9 +217,9 @@ class AiCheckAnalysis:
                 if comment_count := self.comment_count.get(col_name):
                     row[col_name] = round((value / comment_count) * 100, 1)
             checkpoint_analysis_table.add_row(row.values())
-        print(checkpoint_analysis_table, end="\n\n")
+        print(checkpoint_analysis_table, end='\n\n')
 
-        print(f"{self.f1_table}")
+        print(f'{self.f1_table}')
         self.f1_score(**self.f1_table)
 
 
