@@ -30,6 +30,8 @@ source .venv/bin/activate
 
 ### Install prerequisite modules
 
+In the same directory where the `pyproject.toml` file is located, run the following command:
+
 ```sh
 poetry install
 ```
@@ -38,12 +40,12 @@ poetry install
 
 #### When verifying check function
 ```sh
-cd moral-keeper-ai/benchmark/evaluate
+cd benchmark/evaluate
 python evaluate.py ja
 ```
 
 #### When verifying suggest function
 ```sh
-cd moral-keeper-ai/benchmark/mitigation
+cd benchmark/mitigation
 python mitigation.py ja
 ```
