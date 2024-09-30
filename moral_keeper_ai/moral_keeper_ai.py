@@ -83,7 +83,8 @@ class SuggestAI:
             'The text you have received is a comment on open data on a website '
             'published by a local government.\n'
             'The comment is an inappropriate comment that should not be made '
-            'available to the public, so please perform the following # Task Description.\n\n'
+            'available to the public, so please perform the following # Task '
+            'Description.\n\n'
             'Please think in English.\n'
             '# Task Description\n'
             'Analyze the emotional tone of the comments and revise expressions '
@@ -103,7 +104,7 @@ class SuggestAI:
             '{\n'
             '    "Note when comments are modified": "",\n'
             '    "input language (=output language)": "",\n'
-            '    "revised_and_moderated_comments": ""\n'
+            '    "Revised and moderated comment": ""\n'
             '}\n'
             '```\n'
         )
@@ -113,12 +114,14 @@ class SuggestAI:
             {'role': 'system', 'content': self.system_prompt},
             {
                 'role': 'user',
-                'content': 'We can not even make progress with this ridiculously small amount of data.',
+                'content': 'We can not even make progress with this ridiculously '
+                'small amount of data.',
             },
             {
                 'role': 'assistant',
-                'content': 'We feel that the publicly available data lacks the necessary information.'
-                'It would be helpful if you could add information on (describe specific examples). Thank you in advance.',
+                'content': 'We feel that the publicly available data lacks the '
+                'necessary information. It would be helpful if you could add '
+                'information on (describe specific examples). Thank you in advance.',
             },
             {
                 'role': 'user',
