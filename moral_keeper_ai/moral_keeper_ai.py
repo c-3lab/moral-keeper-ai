@@ -104,7 +104,7 @@ class SuggestAI:
             '{\n'
             '    "Note when comments are modified": "",\n'
             '    "input language (=output language)": "",\n'
-            '    "revised_and_moderated_comments": ""\n'
+            '    "Revised and moderated comment": ""\n'
             '}\n'
             '```\n'
         )
