@@ -31,8 +31,9 @@ class Llm:
                 messages=[{'role': 'system', 'content': ''}],
                 max_tokens=1,
             ).model
-        except Exception:
-            return None
+        except Exception as e:
+            logger.error(e)
+            return ""
 
     def chat(self, messages: list) -> list:
         for error_retry in range(3):
